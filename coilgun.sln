@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coilgun", "coilgun\coilgun.vcxproj", "{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Debug|x64.ActiveCfg = Debug|x64
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Debug|x64.Build.0 = Debug|x64
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Debug|x86.ActiveCfg = Debug|Win32
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Debug|x86.Build.0 = Debug|Win32
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Release|x64.ActiveCfg = Release|x64
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Release|x64.Build.0 = Release|x64
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Release|x86.ActiveCfg = Release|Win32
+		{DB7BF212-7F86-40DD-80EC-0F5CA8BC5324}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {69015CCD-5FA5-45C3-BCE3-D08D257530C0}
+	EndGlobalSection
+EndGlobal
