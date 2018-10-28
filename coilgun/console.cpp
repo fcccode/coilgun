@@ -291,33 +291,39 @@ std::vector<std::string> console::delimitString(std::string stringToDelimit)
 					enquotedCorrectly = true;
 				}
 				break;
+			default:
+
+				tmpStr.push_back(curChar);
+				break;
 			}
 			
+			
 		}
-		
-		switch (curChar)
-		{
-		case '\n':
-		case '\0':
-			tokens.push_back(tmpStr);
-			break;
-		case ' ':
-		case '\t':
-			if (!tmpStr.empty()) {
+		else {
+			switch (curChar)
+			{
+			case '\n':
+			case '\0':
 				tokens.push_back(tmpStr);
-				tmpStr.clear();
+				break;
+			case ' ':
+			case '\t':
+				if (!tmpStr.empty()) {
+					tokens.push_back(tmpStr);
+					tmpStr.clear();
+				}
+				break;
+			case '"':
+			case '\'':
+				tmpStr.push_back(curChar);
+				quote = curChar;
+				isEnquotedStr = true;
+				enquotedCorrectly = false;
+				break;
+			default:
+				tmpStr.push_back(curChar);
+				break;
 			}
-			break;
-		case '"':
-		case '\'':
-			tmpStr.push_back(curChar);
-			quote = curChar;
-			isEnquotedStr = true;
-			enquotedCorrectly = false;
-			break;
-		default:
-			tmpStr.push_back(curChar);
-			break;
 		}
 	}
 	tokens.push_back(tmpStr);

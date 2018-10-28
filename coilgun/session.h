@@ -62,6 +62,7 @@ public:
 	
 	void printVariables();
 	void printVariableValue(std::string varName);
+	void printWithFormat(int size, void * varAddr, int OutputFormat);
 	void printLoadedLibs();
 	void printTypes();
 	void printFuctions();

@@ -261,7 +261,7 @@ int session::processStructData(STRUCTURE * structToFill, void* dstAddr) {
 	void * structPointer;
 	structPointer = dstAddr;
 	for (int i = 0; i < structToFill->fields.size(); i++) {
-		printf("field[%d] :", i);
+		printf("field[%d] : ", i);
 		std::getline(std::cin >> std::noskipws, input); // eat newline
 		if (processData(input, structToFill->fields.at(i).size, structPointer) != PROCESSING_OK) {
 			return PROCESSING_ERR;
@@ -395,30 +395,47 @@ void session::printVariableValue(std::string varName)
 		printf("[-] Variable with that name wasn't found\n");
 	}
 	curElement = this->VARIABLE_LIST.at(foundindex);
-	switch (curElement.type.outputFormat)
+	if (curElement.type.typeStruct != nullptr) {
+		STRUCTURE *tmpStruct = (STRUCTURE *)curElement.type.typeStruct;
+		void * pointerAddr = curElement.varAddr;
+		printf("[+] %s\n", varName.c_str());
+		for (int i = 0; i < tmpStruct->fields.size(); i++) {
+			printf("[+][%d] = ", i);
+			printWithFormat(tmpStruct->fields.at(i).size, pointerAddr, tmpStruct->fields.at(i).outputFormat);
+			pointerAddr = (void*)(((uintptr_t)pointerAddr) + tmpStruct->fields.at(i).size); // no support for nested structs yet
+		}
+	}
+	else {
+		printf("[+] %s = ", varName.c_str());
+		printWithFormat(curElement.size, curElement.varAddr, curElement.type.outputFormat);
+	}
+	
+	
+}
+
+void session::printWithFormat(int size, void * varAddr, int OutputFormat) {
+	switch (OutputFormat)
 	{
 	case FORMAT_HEX:
-		printf("[+] %s = 0x", varName.c_str());
-		for (size_t i = 0; i < curElement.size; i++)
+		printf("0x");
+		for (size_t i = 0; i < size; i++)
 		{
-			printf("%02x", (unsigned)((uint8_t*)curElement.varAddr)[i]);
+			printf("%02x", (unsigned)((uint8_t*)varAddr)[i]);
 		}
 		printf("\n");
 		break;
 
 	case FORMAT_STRING:
 		//output string, needs additional checks to preserve instance from segfaults
-		printf("[+] %s = %s\n", varName.c_str(), curElement.varAddr);
+		printf("%s\n",  varAddr);
 		break;
-	
+
 	case FORMAT_INT:
 		//output integer
-		printf("[+] %s = %d\n", varName.c_str(), *((uintptr_t *)(curElement.varAddr)) );
+		printf("%d\n",  *((uintptr_t *)(varAddr)));
 		break;
 	}
-	
 }
-
 void session::printLoadedLibs()
 {
 	if (this->LIBRARIES.size() == 0) {
