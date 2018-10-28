@@ -46,25 +46,42 @@ void console::parseInput(std::vector<std::string> tokens) {
 	size_t tokensSize = tokens.size();
 	if (tokens.at(0).compare("help") == 0) {
 		if (tokensSize > 1) {
-			if (tokens.at(1).compare("add")) {
+			if (tokens.at(1).compare("add") == 0) {
 				//print help for add
-			}
-			else if (tokens.at(1).compare("load")) {
+				if (tokensSize == 2) {
+					printf("[*] Use add to create variables, types, structures or functions. Use \"help add\" + item name to get more info about adding specific items \n");
+					printf("[*] Available types:\nvar\ntype\nfunc\nstruct\n");
+				}
+				else {
+					if (tokens.at(2).compare("var") == 0) {
+						printf("[*] Use following commad to create variable: add var VARIABLETYPE VARIABLENAME [VALUE]\n");
+					}
+					else if (tokens.at(2).compare("type") == 0) {
+						printf("[*] Use following commad to create type: add type TYPENAME TYPESIZE [OUTPUT_FORMAT]\n");
+					}
+					else if (tokens.at(2).compare("func") == 0) {
+						printf("[*] Use following commad to resolve function: add func LIBRARY FUNCTION_NAME ARGC [RETURN_TYPE\"NULL\"]\n");
+					}
+					else if (tokens.at(2).compare("struct") == 0) {
+						printf("[*] Use following commad to create type: add struct STRUCT_NAME NUMBER_OF_FIELDS\n");
+					}
 
-			}
-			else if (tokens.at(1).compare("print")) {
 
+				}
 			}
-			else if (tokens.at(1).compare("shell")) {
-
+			else if (tokens.at(1).compare("load") == 0) {
+				printf("[*] Use load + library name (absolute path also acceptable) to load library for function resolving\n");
 			}
-			else if (tokens.at(1).compare("call")) {
-
+			else if (tokens.at(1).compare("print") == 0) {
+				printf("[*] Print types,vars or their values\n");
 			}
-			else if (tokens.at(1).compare("quickcall")) {
-
+			else if (tokens.at(1).compare("shell") == 0) {
+				printf("[*] It's just dropping you to shell\n");
 			}
-			else if (tokens.at(1).compare("exit")) {
+			else if (tokens.at(1).compare("call") == 0) {
+				printf("[*] To call a resolved function use call + functionName\n");
+			}
+			else if (tokens.at(1).compare("quickcall") == 0) {
 
 			}
 		}
@@ -140,6 +157,12 @@ void console::parseInput(std::vector<std::string> tokens) {
 		}
 		else if (tokens.at(1).compare("struct") == 0) {
 			// call add structure
+			if (tokensSize >= 4) {
+				this->curSession.defineStruct(tokens.at(2), atoi(tokens.at(3).c_str()));
+			}
+			else {
+				printf("[-] Please speicify number of fields in structure\n");
+			}
 		}
 		else {
 			printf("[-] Unknown type for add command\n");
@@ -176,7 +199,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 	}
 	else if (tokens.at(0).compare("print") == 0) {
 		if (tokensSize < 2) {
-			this->curSession.printVariables();
+			printf("[-] Too few arguments\n");
 		}
 		else
 		{
@@ -188,13 +211,16 @@ void console::parseInput(std::vector<std::string> tokens) {
 				this->curSession.printVariableValue(tokens.at(2));
 				
 			}
-			else if (tokens.at(1).compare("type") == 0) {
+			else if (tokens.at(1).compare("vars") == 0) {
+				this->curSession.printVariables();
+			}
+			else if (tokens.at(1).compare("types") == 0) {
 				this->curSession.printTypes();
 			}
-			else if (tokens.at(1).compare("lib") == 0) {
+			else if (tokens.at(1).compare("libs") == 0) {
 				this->curSession.printLoadedLibs();
 			}
-			else if (tokens.at(1).compare("func") == 0) {
+			else if (tokens.at(1).compare("funcs") == 0) {
 				this->curSession.printFuctions();
 			}
 

@@ -25,7 +25,6 @@ struct VARIABLE {
 
 struct STRUCTURE {
 	std::vector<TYPE> fields;
-	unsigned int size;
 };
 
 struct FUNCTION_DATA {
@@ -52,12 +51,14 @@ public:
 	void editType(int field, std::string newVal, std::string typeName);
 	void editVar(int field,std::string newVal,std::string varName);
 
-	int processStructData(STRUCTURE * structToFill, int size, void * dstAddr);
+	int processStructData(STRUCTURE * structToFill, void * dstAddr);
 	int processData(std::string data, int size, void* dstAddr);
 	
 	int createVariable(std::string type, std::string Name, uintptr_t data);
+
 	int deleteVariable(std::string varName);
-	int editVariable(std::string varName);
+
+	
 	
 	void printVariables();
 	void printVariableValue(std::string varName);

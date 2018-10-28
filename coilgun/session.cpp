@@ -2,6 +2,7 @@
 #include "session.h"
 #include <sstream>
 #include <iostream>
+#include <string>
 #include "caller.h"
 
 session::session()
@@ -84,13 +85,13 @@ int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, s
 
 int session::defineStruct(std::string structName, int numOfFields) {
 	std::string fieldType;
-	STRUCTURE tmpStruct;
+	STRUCTURE *tmpStruct = new STRUCTURE;
 	bool found = false;
 	int foundindex = 0;
 	int size = 0;
 	for (int i = 0; i < numOfFields; i++) {
 		printf("[?] Field[%d] type: ", i);
-		scanf_s("%s", fieldType);
+		std::getline(std::cin >> std::noskipws, fieldType);
 		for (int i=0; i < this->TYPES.size(); i++) {
 			if (this->TYPES.at(i).name.compare(fieldType) == 0) {
 				found = true;
@@ -105,14 +106,14 @@ int session::defineStruct(std::string structName, int numOfFields) {
 			
 		}
 		else {
-
-			tmpStruct.fields.push_back(this->TYPES.at(foundindex));
+			tmpStruct->fields.push_back(this->TYPES.at(foundindex));
+			found = false;
 		}
 	}
-	tmpStruct.size = size;
 	TYPE tmpType;
 	tmpType.name = structName;
-	tmpType.typeStruct = (void *)&tmpStruct;
+	tmpType.size = size;
+	tmpType.typeStruct = (void *)tmpStruct;
 	tmpType.outputFormat = FORMAT_HEX; // to do, parse input
 	this->TYPES.push_back(tmpType); // structure is considered as a type. As usual
 	return 0;
@@ -224,10 +225,20 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	}
 	size = this->TYPES.at(foundindex).size;
 	void * varAddr = malloc(size);
+	if (varAddr == nullptr) {
+		printf("[-] Error during allocation\n");
+		return -1;
+	}
 	memset(varAddr, 0, size); // zero dat mem
 	if (this->TYPES.at(foundindex).typeStruct != nullptr) {//check if struct
 		//call struct process
-		processStructData((STRUCTURE*)(this->TYPES.at(foundindex).typeStruct), size, varAddr);
+		if (processStructData((STRUCTURE*)(this->TYPES.at(foundindex).typeStruct), varAddr) == PROCESSING_OK) {
+			newVar.name = Name;
+			newVar.size = size;
+			newVar.type = this->TYPES.at(foundindex);
+			newVar.varAddr = varAddr;
+			this->VARIABLE_LIST.push_back(newVar);
+		}
 	}
 	else {
 		//call basic var process
@@ -244,13 +255,17 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	return 0;
 }
 
-int session::processStructData(STRUCTURE * structToFill, int size, void* dstAddr) {
+int session::processStructData(STRUCTURE * structToFill, void* dstAddr) {
 	std::string input;
-	void * structPointer = dstAddr;
+
+	void * structPointer;
+	structPointer = dstAddr;
 	for (int i = 0; i < structToFill->fields.size(); i++) {
 		printf("field[%d] :", i);
-		scanf_s("%s",input);
-		processData(input, structToFill->fields.at(i).size, structPointer);
+		std::getline(std::cin >> std::noskipws, input); // eat newline
+		if (processData(input, structToFill->fields.at(i).size, structPointer) != PROCESSING_OK) {
+			return PROCESSING_ERR;
+		}
 		structPointer = (void*)( (uintptr_t)(structPointer) +structToFill->fields.at(i).size); // might be broken, need to debug
 	}
 	return 0;
@@ -348,9 +363,7 @@ int session::deleteVariable(std::string varName) {
 	return 0;
 }
 
-int session::editVariable(std::string varName) {
-	return 0;
-}
+
 
 void session::printVariables()
 {
