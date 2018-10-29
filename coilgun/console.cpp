@@ -6,7 +6,7 @@
 console::console()
 {
 	console::printAscii();
-	console::printHelp();
+	//console::printHelp();
 	console::poll();
 }
 
@@ -230,6 +230,21 @@ void console::parseInput(std::vector<std::string> tokens) {
 	}
 	else if (tokens.at(0).compare("quickcall") == 0) {
 		// to do, implement quickcall
+	}
+	else if (tokens.at(0).compare("del") == 0) {
+		if (tokensSize < 2) {
+			printf("[-] Please provide variable name\n");
+			return;
+		}
+		this->curSession.deleteVariable(tokens.at(1));
+	}
+	else if (tokens.at(0).compare("raw") == 0) {
+		if (tokensSize < 2) {
+			printf("[-] Please specify operation (read\write)\n");
+		}
+		else {
+			printf("Work in progress\n");
+		}
 	}
 	else {
 		printf("[-] Unknown command, use \"help\" for reference\n");

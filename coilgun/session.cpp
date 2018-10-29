@@ -287,10 +287,10 @@ int session::processData(std::string data, int size, void* dstAddr) {
 				
 				int counter = 0;
 				uint8_t *dstPointer = ((uint8_t*)dstAddr);
-				for (int i = 0; i < data.size(); i+=2)
+				for (int i = data.size()-1; i > 0; i-=2)
 				{
 					
-					*(dstPointer+counter) = unxdigit(data[i]) * 16 + unxdigit(data[i+1]);
+					*(dstPointer+counter) = unxdigit(data[i-1]) * 16 + unxdigit(data[i]);
 					counter++;
 				}
 				
@@ -400,13 +400,13 @@ void session::printVariableValue(std::string varName)
 		void * pointerAddr = curElement.varAddr;
 		printf("[+] %s\n", varName.c_str());
 		for (int i = 0; i < tmpStruct->fields.size(); i++) {
-			printf("[+][%d] = ", i);
+			printf("[+][& 0x%p][%d] = ", pointerAddr,i);
 			printWithFormat(tmpStruct->fields.at(i).size, pointerAddr, tmpStruct->fields.at(i).outputFormat);
 			pointerAddr = (void*)(((uintptr_t)pointerAddr) + tmpStruct->fields.at(i).size); // no support for nested structs yet
 		}
 	}
 	else {
-		printf("[+] %s = ", varName.c_str());
+		printf("[+][& 0x%p] %s = ",curElement.varAddr, varName.c_str());
 		printWithFormat(curElement.size, curElement.varAddr, curElement.type.outputFormat);
 	}
 	
@@ -418,7 +418,7 @@ void session::printWithFormat(int size, void * varAddr, int OutputFormat) {
 	{
 	case FORMAT_HEX:
 		printf("0x");
-		for (size_t i = 0; i < size; i++)
+		for (signed int i = size-1; i >= 0; i--)
 		{
 			printf("%02x", (unsigned)((uint8_t*)varAddr)[i]);
 		}
