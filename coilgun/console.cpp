@@ -246,6 +246,52 @@ void console::parseInput(std::vector<std::string> tokens) {
 			printf("Work in progress\n");
 		}
 	}
+	else if (tokens.at(0).compare("edit") == 0) {
+		if (tokensSize < 5) {
+			printf("[-] Too few arguments\n");
+		}
+		else {
+			int field_type = 0;
+			if (tokens.at(1).compare("var")==0) {
+				if (tokens.at(3).compare("name") == 0) {
+					field_type = TYPE_FIELD_NAME;
+				}
+				else if (tokens.at(3).compare("val") == 0) {
+					field_type = TYPE_FIELD_VAL;
+				}
+				else if (tokens.at(3).compare("addr") == 0) {
+					field_type = TYPE_FIELD_ADDR;
+				}
+				else if (tokens.at(3).compare("type") == 0) {
+					field_type = TYPE_FIELD_TYPE;
+				}
+				if (field_type != 0) {
+					this->curSession.editVar(field_type, tokens.at(4), tokens.at(2));
+				}
+				else {
+					printf("[-] Unknown field\n");
+				}
+			}
+			else if (tokens.at(1).compare("type") == 0) {
+				if (tokens.at(3).compare("name") == 0) {
+					field_type = TYPE_FIELD_NAME;
+				}
+				else if (tokens.at(3).compare("size") == 0) {
+					field_type = TYPE_FIELD_SIZE;
+				}
+				if (field_type != 0) {
+					this->curSession.editType(field_type, tokens.at(4), tokens.at(2));
+				}
+			}
+			else if (tokens.at(1).compare("func") == 0) {
+
+			}
+			else {
+				printf("[-] Unknown element\n");
+			}
+
+		}
+	}
 	else {
 		printf("[-] Unknown command, use \"help\" for reference\n");
 		return;

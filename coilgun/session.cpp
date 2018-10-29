@@ -176,7 +176,7 @@ void session::editVar(int field, std::string newVal, std::string varName)
 		}
 	}
 	if (!found) {
-		printf("[-] Type with such name wasn't found\n");
+		printf("[-] Variable with such name wasn't found\n");
 		return;
 	}
 	switch (field)
@@ -202,6 +202,10 @@ void session::editVar(int field, std::string newVal, std::string varName)
 			printf("[-] Error occured while processing input\n");
 		}
 		break;
+	case TYPE_FIELD_ADDR:
+		if (processData(newVal, sizeof(uintptr_t), &(this->VARIABLE_LIST.at(foundindex).varAddr)) != PROCESSING_OK) {
+			printf("[-] Error occured while processing input\n");
+		}
 	}
 	
 
@@ -348,7 +352,7 @@ int session::deleteVariable(std::string varName) {
 	bool found = false;
 	int foundindex = 0;
 	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
-		if (this->VARIABLE_LIST.at(i).name.compare(varName)) {
+		if (this->VARIABLE_LIST.at(i).name.compare(varName) == 0) {
 			varToDelete = this->VARIABLE_LIST.at(i);
 			found = true;
 			foundindex = i;
