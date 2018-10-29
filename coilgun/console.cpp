@@ -243,7 +243,55 @@ void console::parseInput(std::vector<std::string> tokens) {
 			printf("[-] Please specify operation (read\write)\n");
 		}
 		else {
-			printf("Work in progress\n");
+			if (tokens.at(1).compare("read") == 0) {
+				printf("[?] addr, size: ");
+				std::string tmpInput;
+				std::vector<std::string> tmpTokens;
+				std::getline(std::cin, tmpInput);
+				tmpTokens = delimitString(tmpInput);
+				size_t tmpSize = tmpTokens.size();
+				if (tmpSize != 2) {
+					printf("[-] Wrong amount of arguments\n");
+					return;
+				}
+				else {
+					
+					uintptr_t *dstPointer = (uintptr_t*) malloc(sizeof(uintptr_t));
+					if (dstPointer == nullptr) {
+						printf("[-] Allocation error\n");
+						return;
+					}
+					this->curSession.processData(tmpTokens.at(0), atoi(tmpTokens.at(1).c_str()), dstPointer);
+					printf("[+] Data: ");
+					this->curSession.printWithFormat(atoi(tmpTokens.at(1).c_str()), (uintptr_t*)*dstPointer, FORMAT_HEX);
+					free(dstPointer);
+				}
+				
+			}
+			else if (tokens.at(1).compare("write") == 0) {
+				printf("[?] addr, size, value: ");
+				std::string tmpInput;
+				std::vector<std::string> tmpTokens;
+				std::getline(std::cin, tmpInput);
+				tmpTokens = delimitString(tmpInput);
+				size_t tmpSize = tmpTokens.size();
+				if (tmpSize != 3) {
+					printf("[-] Wrong amount of arguments\n");
+					return;
+				}
+				uintptr_t *dstPointer = (uintptr_t*) malloc(sizeof(uintptr_t));
+				if (dstPointer == nullptr) {
+					printf("[-] Allocation error\n");
+					return;
+				}
+				this->curSession.processData(tmpTokens.at(0), atoi(tmpTokens.at(1).c_str()), dstPointer);
+				this->curSession.processData(tmpTokens.at(2), atoi(tmpTokens.at(1).c_str()), (uintptr_t*)*dstPointer);
+				free(dstPointer);
+
+			}
+			else {
+				printf("[-] Unknown operation\n");
+			}
 		}
 	}
 	else if (tokens.at(0).compare("edit") == 0) {

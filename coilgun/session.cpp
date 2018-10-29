@@ -20,7 +20,7 @@ session::~session()
 {
 }
 
-uint8_t unxdigit(int c) // thanks braindead
+uint8_t session::unxdigit(int c) // thanks braindead
 {
 	if (((unsigned)c - 48U) <= 9)
 		return c - 48;
@@ -583,3 +583,4 @@ void session::callWrapper(std::string funcName)
 
 	}
 }
+

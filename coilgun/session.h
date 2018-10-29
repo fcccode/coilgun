@@ -41,6 +41,8 @@ class session
 public:
 	session();
 	~session();
+
+	uint8_t unxdigit(int c);
 	
 	int addType(std::string typeName,int size, int outputFormat);
 	int addFunc(std::string dllName, std::string funcName, int NumOfArgs, std::string returnType);
@@ -69,6 +71,8 @@ public:
 	void printFuctions();
 
 	void callWrapper(std::string funcName);
+
+	void rawRead(uintptr_t addr, int size);
 
 	std::vector<VARIABLE> VARIABLE_LIST;
 	std::vector<TYPE> TYPES; //typeName + typeSize
