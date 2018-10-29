@@ -211,6 +211,31 @@ void session::editVar(int field, std::string newVal, std::string varName)
 
 }
 
+void session::editFunc(int field, std::string newVal, std::string funcName) {
+	if (this->FUNCTIONS_MAP.find(funcName) != this->FUNCTIONS_MAP.end()) {
+		FUNCTION_DATA &curFunc = (this->FUNCTIONS_MAP.find(funcName)->second);
+		if (field == TYPE_FIELD_ARGC) {
+			curFunc.numOfArgs = atoi(newVal.c_str());
+		}
+		else {
+			bool found = false;
+			for (int i = 0; i < this->TYPES.size(); i++) {
+				if (this->TYPES.at(i).name.compare(newVal) == 0) {
+					curFunc.ReturnType = this->TYPES.at(i);
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				printf("[-] Unknown type\n");
+			}
+		}
+	}
+	else {
+		printf("[-] Function wasn't found\n");
+	}
+}
+
 int session::createVariable(std::string type, std::string Name, uintptr_t data) {
 	//ask for input here, needs structs processing
 	VARIABLE newVar;

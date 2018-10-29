@@ -50,6 +50,7 @@ public:
 	
 	void editType(int field, std::string newVal, std::string typeName);
 	void editVar(int field,std::string newVal,std::string varName);
+	void editFunc(int field, std::string newVal, std::string funcName);
 
 	int processStructData(STRUCTURE * structToFill, void * dstAddr);
 	int processData(std::string data, int size, void* dstAddr);
