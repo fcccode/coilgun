@@ -25,27 +25,18 @@ void console::poll()
 		parseInput(tokens);
 		tokens.clear(); // empty input tokens
 	}
-
+	
 }
 
 void console::parseInput(std::vector<std::string> tokens) {
-	if (tokens.size() == 0) { 
-		return; 
-	}
+	transformLower(tokens.at(0)); // convert cmd name to lowercase
 	//wipe empty variables
 	size_t tmpSize = tokens.size();
-
-	for (int i = 0; i < tmpSize; i++) {
-		if (tokens.at(i).empty()) {
-			tokens.erase(tokens.begin() + i);
-			i--;
-			tmpSize--;
-		}
-	}
 
 	size_t tokensSize = tokens.size();
 	if (tokens.at(0).compare("help") == 0) {
 		if (tokensSize > 1) {
+			transformLower(tokens.at(1));
 			if (tokens.at(1).compare("add") == 0) {
 				//print help for add
 				if (tokensSize == 2) {
@@ -53,6 +44,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 					printf("[*] Available types:\nvar\ntype\nfunc\nstruct\n");
 				}
 				else {
+					transformLower(tokens.at(2));
 					if (tokens.at(2).compare("var") == 0) {
 						printf("[*] Use following commad to create variable: add var VARIABLETYPE VARIABLENAME [VALUE]\n");
 					}
@@ -97,6 +89,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 			printf("[-] Too few arguments\n");
 			return;
 		}
+		transformLower(tokens.at(1));
 		if (tokens.at(1).compare("var") == 0) {
 			// call add variable
 			int format = FORMAT_HEX;
@@ -144,6 +137,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 				return;
 
 			}
+			transformLower(tokens.at(2)); //lowercase module name
 			int res = this->curSession.addFunc(tokens.at(2), tokens.at(3), atoi(tokens.at(4).c_str()), tokens.at(5));
 			if (res == FUNCTION_NOT_FOUND) {
 				printf("[-] Function with that name wasn't resolved\n");
@@ -174,9 +168,19 @@ void console::parseInput(std::vector<std::string> tokens) {
 			printf("[-] Please provide library name\n");
 			return;
 		}
+		
+		//concat strings that have whitespace in path
+		std::string libName;
+		for (int i = 1; i < tokensSize; i++)
+		{
+			libName += tokens.at(i) + ' ';
+		}
+		//clear last whitespace
+		libName = libName.substr(0, libName.size() - 1);
+
+		transformLower(libName); // to lowercase dll name
 		// call dll loader
-		std::transform(tokens.at(1).begin(), tokens.at(1).end(), tokens.at(1).begin(), ::tolower); // to lowercase dll name
-		int res = this->curSession.loadLibrary(tokens.at(1));
+		int res = this->curSession.loadLibrary(libName);
 		if (res == LIBRARY_NOT_FOUND) {
 			printf("[-] Library wasn't found\n");
 		}
@@ -203,27 +207,42 @@ void console::parseInput(std::vector<std::string> tokens) {
 		}
 		else
 		{
-			if (tokens.at(1).compare("var") == 0) {
-				if (tokensSize < 3) {
-					printf("[-] Please provide variable name to be printed\n");
-					return;
+			bool unknown = false;
+			transformLower(tokens.at(1));
+			if (tokensSize > 2) {
+				if (tokens.at(1).compare("var") == 0) {
+					this->curSession.printVariableValue(tokens.at(2));
 				}
-				this->curSession.printVariableValue(tokens.at(2));
-				
+				else if (tokens.at(1).compare("func") == 0) {
+					this->curSession.printFuncData(tokens.at(2));
+				}
+				else if (tokens.at(1).compare("type") == 0) {
+					this->curSession.printTypeData(tokens.at(2));
+				}
+				else {
+					unknown = true;
+				}
 			}
-			else if (tokens.at(1).compare("vars") == 0) {
-				this->curSession.printVariables();
+			else {
+				if (tokens.at(1).compare("vars") == 0) {
+					this->curSession.printVariables();
+				}
+				else if (tokens.at(1).compare("types") == 0) {
+					this->curSession.printTypes();
+				}
+				else if (tokens.at(1).compare("libs") == 0) {
+					this->curSession.printLoadedLibs();
+				}
+				else if (tokens.at(1).compare("funcs") == 0) {
+					this->curSession.printFuctions();
+				}
+				else {
+					unknown = true;
+				}
 			}
-			else if (tokens.at(1).compare("types") == 0) {
-				this->curSession.printTypes();
+			if (unknown) {
+				printf("[-] Unknown element\n");
 			}
-			else if (tokens.at(1).compare("libs") == 0) {
-				this->curSession.printLoadedLibs();
-			}
-			else if (tokens.at(1).compare("funcs") == 0) {
-				this->curSession.printFuctions();
-			}
-
 			
 		}
 
@@ -243,6 +262,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 			printf("[-] Please specify operation (read\write)\n");
 		}
 		else {
+			transformLower(tokens.at(1));
 			if (tokens.at(1).compare("read") == 0) {
 				printf("[?] addr, size: ");
 				std::string tmpInput;
@@ -299,8 +319,10 @@ void console::parseInput(std::vector<std::string> tokens) {
 			printf("[-] Too few arguments\n");
 		}
 		else {
+			transformLower(tokens.at(1));
 			int field_type = 0;
 			if (tokens.at(1).compare("var")==0) {
+				transformLower(tokens.at(3));
 				if (tokens.at(3).compare("name") == 0) {
 					field_type = TYPE_FIELD_NAME;
 				}
@@ -330,9 +352,23 @@ void console::parseInput(std::vector<std::string> tokens) {
 				if (field_type != 0) {
 					this->curSession.editType(field_type, tokens.at(4), tokens.at(2));
 				}
+				else {
+					printf("[-] Unknown field\n");
+				}
 			}
 			else if (tokens.at(1).compare("func") == 0) {
-
+				if (tokens.at(3).compare("return") == 0) {
+					field_type = TYPE_FIELD_RET;
+				}
+				else if (tokens.at(3).compare("argc") == 0) {
+					field_type = TYPE_FIELD_ARGC;
+				}
+				if (field_type != 0) {
+					this->curSession.editFunc(field_type, tokens.at(4), tokens.at(2));
+				}
+				else {
+					printf("[-] Unknown field\n");
+				}
 			}
 			else {
 				printf("[-] Unknown element\n");
@@ -341,13 +377,22 @@ void console::parseInput(std::vector<std::string> tokens) {
 		}
 	}
 	else if (tokens.at(0).compare("shellcode") == 0) {
-	if (tokensSize < 3) {
-		printf("[-] Provide shellcode address and size\n");
-		return;
+		if (tokensSize < 3) {
+			printf("[-] Provide shellcode address and size\n");
+			return;
 		}
-	uintptr_t shellcodeAddr = (uintptr_t)malloc(sizeof(uintptr_t));
-	this->curSession.processData(tokens.at(1), sizeof(uintptr_t), (void *)shellcodeAddr);
-	this->curSession.execShellcode((void*)*(uintptr_t*)shellcodeAddr, atoi(tokens.at(2).c_str()));
+		uintptr_t shellcodeAddr = (uintptr_t)malloc(sizeof(uintptr_t));
+		this->curSession.processData(tokens.at(1), sizeof(uintptr_t), (void *)shellcodeAddr);
+		if (tokensSize == 4) {
+			transformLower(tokens.at(3));
+			if (tokens.at(3).compare("noexec") == 0) {
+				this->curSession.execShellcode((void*)*(uintptr_t*)shellcodeAddr, atoi(tokens.at(2).c_str()),true);
+				return;
+			}
+		}
+		this->curSession.execShellcode((void*)*(uintptr_t*)shellcodeAddr, atoi(tokens.at(2).c_str()),false);
+
+
 	}
 	else {
 		printf("[-] Unknown command, use \"help\" for reference\n");
@@ -497,6 +542,9 @@ void console::printAscii()
 	printf("\n");
 }
 
+void console::transformLower(std::string &toTransform) {
+	std::transform(toTransform.begin(), toTransform.end(), toTransform.begin(), ::tolower);
+}
 
 console::~console()
 {

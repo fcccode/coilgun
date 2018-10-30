@@ -252,6 +252,9 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	if (!found) {
 		return TYPE_NAME_NOT_FOUND;
 	}
+	if (data == 0) {
+		data = (uintptr_t)std::string("").data();
+	}
 	size = this->TYPES.at(foundindex).size;
 	void * varAddr = malloc(size);
 	if (varAddr == nullptr) {
@@ -301,6 +304,9 @@ int session::processStructData(STRUCTURE * structToFill, void* dstAddr) {
 }
 
 int session::processData(std::string data, int size, void* dstAddr) {
+	if (data.empty()) {
+		return PROCESSING_OK;
+	}
 	switch (data[0])
 	{
 	case '0':
@@ -441,6 +447,53 @@ void session::printVariableValue(std::string varName)
 	
 	
 }
+void session::printFuncData(std::string funcName) {
+	if (this->FUNCTIONS_MAP.find(funcName) != this->FUNCTIONS_MAP.end()) {
+		FUNCTION_DATA tmpFunc = this->FUNCTIONS_MAP.find(funcName)->second;
+		printf("[+] Address 0x%p \n", (uintptr_t)tmpFunc.funcAddr);
+		printf("[+] Required argc %d \n", tmpFunc.numOfArgs);
+		printf("[+] Return type %s \n", tmpFunc.ReturnType.name.c_str());
+	}
+	else {
+		printf("[-] Function wasn't found\n");
+	}
+}
+void session::printTypeData(std::string typeName) {
+	bool found = false;
+	for (int i = 0; i < this->TYPES.size(); i++) {
+		if (this->TYPES.at(i).name.compare(typeName) == 0) {
+			found = true;
+			TYPE tmpType = this->TYPES.at(i);
+			printf("[+] Size %d\n",tmpType.size);
+			printf("[+] Output format ");
+			switch (tmpType.outputFormat)
+			{
+			case FORMAT_HEX:
+				printf("hex\n");
+				break;
+			case FORMAT_STRING:
+				printf("str\n");
+				break;
+			case FORMAT_INT:
+				printf("int\n");
+				break;
+			}
+			if (tmpType.typeStruct != nullptr) {
+				printf("[+] Is structure\n");
+				printf("[*] Structure fields:\n");
+				STRUCTURE *tmpStruct = (STRUCTURE*)tmpType.typeStruct;
+				for (int j = 0; j < tmpStruct->fields.size(); j++) {
+					printf("[%d] %s\n", j, tmpStruct->fields.at(i).name.c_str());
+				}
+			}
+
+		}
+	}
+	if (!found) {
+		printf("[-] Type wasn't found");
+	}
+}
+
 
 void session::printWithFormat(int size, void * varAddr, int OutputFormat) {
 	switch (OutputFormat)
@@ -584,7 +637,7 @@ void session::callWrapper(std::string funcName)
 	}
 }
 
-void session::execShellcode(void *shellCodeAddr, int size) {
+void session::execShellcode(void *shellCodeAddr, int size, bool noExec) {
 	std::vector<void*> args;
 	uintptr_t ProtFlag = 0x40; // PAGE EXECUTE REDWRITE
 	uintptr_t MemFlag = 0x1000 | 0x2000;
@@ -614,7 +667,9 @@ void session::execShellcode(void *shellCodeAddr, int size) {
 	{
 		*(uint8_t*)newLoc++ = ((uint8_t *)shellCodeAddr)[i];
 	}
-
+	if (noExec) {
+		return;
+	}
 	printf("[+] Executing shellcode\n");
 	caller::shellcodeCall((void *)locPointer);
 }

@@ -14,6 +14,7 @@ public:
 	void exit();
 	void drop2Shell();
 	void printAscii(); //kek
+	void transformLower(std::string &toTransform);
 	~console();
 private:
 	session curSession = session();

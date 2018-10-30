@@ -65,6 +65,8 @@ public:
 	
 	void printVariables();
 	void printVariableValue(std::string varName);
+	void printFuncData(std::string funcName);
+	void printTypeData(std::string typeName);
 	void printWithFormat(int size, void * varAddr, int OutputFormat);
 	void printLoadedLibs();
 	void printTypes();
@@ -72,10 +74,9 @@ public:
 
 	void callWrapper(std::string funcName);
 
-	void execShellcode(void * shellCodeAddr, int size);
-
+	void execShellcode(void * shellCodeAddr, int size, bool noExec);
 	
-	void rawRead(uintptr_t addr, int size);
+
 
 	std::vector<VARIABLE> VARIABLE_LIST;
 	std::vector<TYPE> TYPES; //typeName + typeSize
