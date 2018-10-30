@@ -97,6 +97,21 @@ pop rbp
 ret
 
 asmCall ENDP
+
+PUBLIC callShellcode
+
+callShellcode PROC
+; RCX holds the shellcode addr
+
+push rbp ; 
+mov rbp, rsp;
+call rcx ; call shellcode
+mov rsp, rbp
+pop rbp
+ret
+
+callShellcode ENDP
+
 _TEXT ENDS
 
 END

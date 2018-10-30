@@ -340,6 +340,15 @@ void console::parseInput(std::vector<std::string> tokens) {
 
 		}
 	}
+	else if (tokens.at(0).compare("shellcode") == 0) {
+	if (tokensSize < 3) {
+		printf("[-] Provide shellcode address and size\n");
+		return;
+		}
+	uintptr_t shellcodeAddr = (uintptr_t)malloc(sizeof(uintptr_t));
+	this->curSession.processData(tokens.at(1), sizeof(uintptr_t), (void *)shellcodeAddr);
+	this->curSession.execShellcode((void*)*(uintptr_t*)shellcodeAddr, atoi(tokens.at(2).c_str()));
+	}
 	else {
 		printf("[-] Unknown command, use \"help\" for reference\n");
 		return;

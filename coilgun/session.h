@@ -72,6 +72,9 @@ public:
 
 	void callWrapper(std::string funcName);
 
+	void execShellcode(void * shellCodeAddr, int size);
+
+	
 	void rawRead(uintptr_t addr, int size);
 
 	std::vector<VARIABLE> VARIABLE_LIST;
