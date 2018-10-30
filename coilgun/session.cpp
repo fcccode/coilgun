@@ -162,7 +162,19 @@ void session::editType(int field, std::string newVal, std::string typeName)
 	case TYPE_FIELD_SIZE:
 		this->TYPES.at(foundindex).size = atoi(newVal.c_str());
 		break;
+	case TYPE_FIELD_FMT:
+		if (newVal.compare("hex") == 0) {
+			this->TYPES.at(foundindex).outputFormat = FORMAT_HEX;
+		}
+		else if (newVal.compare("str") == 0) {
+			this->TYPES.at(foundindex).outputFormat = FORMAT_STRING;
+		}
+		else if (newVal.compare("int") == 0) {
+			this->TYPES.at(foundindex).outputFormat = FORMAT_INT;
+		}
+		break;
 	}
+	
 }
 
 void session::editVar(int field, std::string newVal, std::string varName)
@@ -397,7 +409,6 @@ int session::deleteVariable(std::string varName) {
 	free(varToDelete.varAddr);
 	return 0;
 }
-
 
 
 void session::printVariables()

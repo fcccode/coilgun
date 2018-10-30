@@ -40,8 +40,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 			if (tokens.at(1).compare("add") == 0) {
 				//print help for add
 				if (tokensSize == 2) {
-					printf("[*] Use add to create variables, types, structures or functions. Use \"help add\" + item name to get more info about adding specific items \n");
-					printf("[*] Available types:\nvar\ntype\nfunc\nstruct\n");
+					printf("[*] Use add to create var (variable), type, struct (structures) or func (functions).\n");
 				}
 				else {
 					transformLower(tokens.at(2));
@@ -52,7 +51,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 						printf("[*] Use following commad to create type: add type TYPENAME TYPESIZE [OUTPUT_FORMAT]\n");
 					}
 					else if (tokens.at(2).compare("func") == 0) {
-						printf("[*] Use following commad to resolve function: add func LIBRARY FUNCTION_NAME ARGC [RETURN_TYPE\"NULL\"]\n");
+						printf("[*] Use following commad to resolve function: add func LIBRARY FUNCTION_NAME ARGC [RETURN_TYPE\\\"NULL\"]\n");
 					}
 					else if (tokens.at(2).compare("struct") == 0) {
 						printf("[*] Use following commad to create type: add struct STRUCT_NAME NUMBER_OF_FIELDS\n");
@@ -61,17 +60,38 @@ void console::parseInput(std::vector<std::string> tokens) {
 
 				}
 			}
+			else if (tokens.at(1).compare("edit") == 0) {
+				if (tokensSize > 2) {
+					if (tokens.at(2).compare("type")==0) {
+						printf("[*] in type you can edit following fields: size, fmt (format), name\n");
+					}
+					else if (tokens.at(2).compare("var") == 0) {
+						printf("[*] in var you can edit following fields: name, val (value), type, addr (address)\n");
+					}
+					else if (tokens.at(2).compare("func") == 0) {
+						printf("[*] in var you can edit following fields: argc (number of arguments), ret (return type)\n");
+					}
+				}
+				else {
+					printf("[*] You can edit following items - type, var, func\n[*] Command syntax: edit ITEM FIELD ITEM_NAME NEW_VALUE\n");
+				}
+			}
 			else if (tokens.at(1).compare("load") == 0) {
 				printf("[*] Use load + library name (absolute path also acceptable) to load library for function resolving\n");
 			}
 			else if (tokens.at(1).compare("print") == 0) {
-				printf("[*] Print types,vars or their values\n");
+				printf("[*] Print types, vars or their values\n");
+				printf("[*] Basic data: print ITEM+s -- to print all elements. Ex: print vars, print types\n");
+				printf("[*] Print more info: print ITEM ITEAMNAME. Ex print var myVarName\n");
 			}
 			else if (tokens.at(1).compare("shell") == 0) {
 				printf("[*] It's just dropping you to shell\n");
 			}
 			else if (tokens.at(1).compare("call") == 0) {
 				printf("[*] To call a resolved function use call + functionName\n");
+			}
+			else if (tokens.at(1).compare("shellcode") == 0) {
+				printf("[*] Command syntax: shellcode SHELLCODEADDR SIZE_OF_SHELLCODE [noexec]\n");
 			}
 			else if (tokens.at(1).compare("quickcall") == 0) {
 
@@ -349,6 +369,10 @@ void console::parseInput(std::vector<std::string> tokens) {
 				else if (tokens.at(3).compare("size") == 0) {
 					field_type = TYPE_FIELD_SIZE;
 				}
+				else if (tokens.at(3).compare("fmt") == 0) {
+					field_type = TYPE_FIELD_FMT;
+					transformLower(tokens.at(4));
+				}
 				if (field_type != 0) {
 					this->curSession.editType(field_type, tokens.at(4), tokens.at(2));
 				}
@@ -521,6 +545,7 @@ void console::exit()
 	//close the program
 	_exit(0);
 }
+
 
 
 void console::drop2Shell()

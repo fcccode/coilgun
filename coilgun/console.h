@@ -13,7 +13,7 @@ public:
 	void printHelp();
 	void exit();
 	void drop2Shell();
-	void printAscii(); //kek
+	void printAscii();//kek
 	void transformLower(std::string &toTransform);
 	~console();
 private:
