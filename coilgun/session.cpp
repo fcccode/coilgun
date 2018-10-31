@@ -319,12 +319,16 @@ int session::createVariable(std::string type, std::string Name, std::vector<std:
 		data = (uintptr_t)values.at(0).data();
 	}
 	size = tmpType->size;
-	void * varAddr = malloc(size);
+	size_t modSize = size;
+	if (size < 8) {//expand variable to 64 bits
+		modSize = 8;
+	}
+	void * varAddr = malloc(modSize);
 	if (varAddr == nullptr) {
 		printf("[-] Error during allocation\n");
 		return -1;
 	}
-	memset(varAddr, 0, size); // zero dat mem
+	memset(varAddr, 0, modSize); // zero dat mem
 	if (tmpType->typeStruct != nullptr) {//check if struct
 		//call struct process
 		if (processStructData((STRUCTURE*)tmpType->typeStruct, varAddr,values) == PROCESSING_OK) {
