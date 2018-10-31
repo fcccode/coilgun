@@ -31,6 +31,15 @@ int session::addType(std::string typeName, int typeSize, int outputFormat)
 {
 	bool found = false;
 	TYPE *tmpType;
+	if (typeName.empty()) {
+		printf("[-] Name can't be empty\n");
+		return TYPE_ERROR;
+	}
+	else if (checkIfNumber(typeName[0])) {
+		printf("[-] Name can't start with digit\n");
+		return TYPE_ERROR;
+	}
+
 	if (getTypeByName(typeName) == 0){
 		if (typeSize <= 0) {
 			return TYPE_ERROR;
@@ -79,6 +88,14 @@ int session::defineStruct(std::string structName, std::vector<std::string> field
 	TYPE* tmpType;
 	bool found = false;
 	int size = 0;
+	if (structName.empty()) {
+		printf("[-] Name can't be empty\n");
+		return TYPE_ERROR;
+	}
+	else if (checkIfNumber(structName[0])) {
+		printf("[-] Name can't start with digit\n");
+		return TYPE_ERROR;
+	}
 	if (fieldTypes.size() == 0) {
 		printf("[-] Struct can't be empty\n");
 		return TYPE_NAME_NOT_FOUND;
@@ -143,8 +160,17 @@ void session::editType(int field, std::string newVal, std::string typeName)
 	switch (field)
 	{
 	case TYPE_FIELD_NAME:
-		tmpType->name = newVal;
-		break;
+		if (!newVal.empty()) {
+			if (!checkIfNumber(newVal[0])) {
+				tmpType->name = newVal;
+			}
+			else {
+				printf("[-] Name can't start with digit\n");
+			}
+		}
+		else {
+			printf("[-] Name can't be empty\n");
+		}
 	case TYPE_FIELD_SIZE:
 		tmpType->size = atoi(newVal.c_str());
 		break;
@@ -178,7 +204,20 @@ void session::editVar(int field, std::string newVal, std::string varName)
 	switch (field)
 	{
 	case TYPE_FIELD_NAME:
-		tmpVar->name = newVal;
+		//sanity check
+		if (!newVal.empty()) {
+			if (!checkIfNumber(newVal[0])) {
+				tmpVar->name = newVal;
+			}
+			else {
+				printf("[-] Name can't start with digit\n");
+			}
+		}
+		else {
+			printf("[-] Name can't be empty\n");
+		}
+		
+
 		break;
 	case TYPE_FIELD_TYPE:
 		found = false;
@@ -232,6 +271,14 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	TYPE *tmpType = nullptr;
 	bool found = false;
 	int size = 0;
+	if (Name.empty()) {
+		printf("[-] Name can't be empty\n");
+		return TYPE_ERROR;
+	}
+	else if (checkIfNumber(Name[0])) {
+		printf("[-] Name can't start with digit\n");
+		return TYPE_ERROR;
+	}
 	if (getTypeByName(type) != 0) {
 		found = true;
 		tmpType = (TYPE*)getTypeByName(type);
@@ -553,6 +600,15 @@ uintptr_t session::getTypeByName(std::string TypeName) {
 		}
 	}
 	return 0;
+}
+
+bool session::checkIfNumber(char testChar)
+{
+	if (testChar <= 57 && testChar >= 48) {//ascii codes for digits
+		return true;
+	}
+	return false;
+	
 }
 
 void session::callWrapper(std::string funcName,std::vector<std::string> args)

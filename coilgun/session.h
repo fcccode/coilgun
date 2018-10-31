@@ -77,6 +77,8 @@ public:
 
 	uintptr_t getTypeByName(std::string TypeName);
 
+	bool checkIfNumber(char testChar);
+
 	void callWrapper(std::string funcName, std::vector<std::string> args);
 
 
