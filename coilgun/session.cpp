@@ -101,14 +101,15 @@ int session::defineStruct(std::string structName, std::vector<std::string> field
 		return TYPE_NAME_NOT_FOUND;
 	}
 	for (int i = 0; i < fieldTypes.size(); i++) {
+		found = false;
 		if (getTypeByName(fieldTypes.at(i)) != 0) {
 			found = true;
 			tmpType = (TYPE *)getTypeByName(fieldTypes.at(i));
 			tmpStruct->fields.push_back(*tmpType);
-			found = false;
+			size += tmpType->size;
 		}
 		if (!found) {
-			printf("[-] Unknown type \"%s\"\n", fieldType);
+			printf("[-] Unknown type \"%s\"\n", fieldType.c_str());
 			return TYPE_NAME_NOT_FOUND;
 
 		}
@@ -117,7 +118,7 @@ int session::defineStruct(std::string structName, std::vector<std::string> field
 
 	TYPE newStruct;
 	newStruct.name = structName;
-	newStruct.size = fieldTypes.size();
+	newStruct.size = size;
 	newStruct.typeStruct = (void *)tmpStruct;
 	newStruct.outputFormat = FORMAT_HEX; // to do, parse input
 	this->TYPES.push_back(newStruct); // structure is considered as a type. As usual
@@ -265,12 +266,12 @@ void session::editFunc(int field, std::string newVal, std::string funcName) {
 	}
 }
 
-int session::createVariable(std::string type, std::string Name, uintptr_t data) {
-	//ask for input here, needs structs processing
+int session::createVariable(std::string type, std::string Name, std::vector<std::string> values) {
 	VARIABLE newVar;
 	TYPE *tmpType = nullptr;
 	bool found = false;
 	int size = 0;
+	uintptr_t data;
 	if (Name.empty()) {
 		printf("[-] Name can't be empty\n");
 		return TYPE_ERROR;
@@ -286,8 +287,11 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	if (!found) {
 		return TYPE_NAME_NOT_FOUND;
 	}
-	if (data == 0) {
+	if (values.empty()) {
 		data = (uintptr_t)std::string("").data();
+	}
+	else {
+		data = (uintptr_t)values.at(0).data();
 	}
 	size = tmpType->size;
 	void * varAddr = malloc(size);
@@ -298,7 +302,7 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	memset(varAddr, 0, size); // zero dat mem
 	if (tmpType->typeStruct != nullptr) {//check if struct
 		//call struct process
-		if (processStructData((STRUCTURE*)tmpType->typeStruct, varAddr) == PROCESSING_OK) {
+		if (processStructData((STRUCTURE*)tmpType->typeStruct, varAddr,values) == PROCESSING_OK) {
 			newVar.name = Name;
 			newVar.size = size;
 			newVar.type = *tmpType;
@@ -321,20 +325,24 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	return 0;
 }
 
-int session::processStructData(STRUCTURE * structToFill, void* dstAddr) {
+int session::processStructData(STRUCTURE * structToFill, void* dstAddr, std::vector<std::string> values) {
 	std::string input;
-
+	std::size_t valuesSize = values.size();
+	if (values.empty()) {
+		return PROCESSING_OK;
+	}
 	void * structPointer;
 	structPointer = dstAddr;
 	for (int i = 0; i < structToFill->fields.size(); i++) {
-		printf("field[%d] : ", i);
-		std::getline(std::cin >> std::noskipws, input); // eat newline
-		if (processData(input, structToFill->fields.at(i).size, structPointer) != PROCESSING_OK) {
+		if (i > valuesSize - 1) {
+			break; //less values than needed, but it's ok
+		}
+		if (processData(values.at(i), structToFill->fields.at(i).size, structPointer) != PROCESSING_OK) {
 			return PROCESSING_ERR;
 		}
 		structPointer = (void*)( (uintptr_t)(structPointer) +structToFill->fields.at(i).size); // might be broken, need to debug
 	}
-	return 0;
+	return PROCESSING_OK;
 }
 
 int session::processData(std::string data, int size, void* dstAddr) {
@@ -674,7 +682,9 @@ void session::callWrapper(std::string funcName,std::vector<std::string> args)
 	// push variable with return value and print it
 	std::string varName = "return_" + funcName;
 	if (getVarByName(varName) == 0) {
-		createVariable(callFunc.ReturnType.name, varName, (uintptr_t)((std::to_string((long long int)ret_val)).c_str()));
+		std::vector<std::string> args;
+		args.push_back(((std::to_string((long long int)ret_val)).c_str()));
+		createVariable(callFunc.ReturnType.name, varName, args);
 	}
 	else {
 		VARIABLE* retVar = (VARIABLE *)getVarByName(varName);
@@ -719,7 +729,9 @@ void session::execShellcode(void *shellCodeAddr, int size, bool noExec) {
 	}
 	//push location in variable list. needed for scripting
 	if (getVarByName("SHELLC_LOCATION") == 0) {
-		createVariable("DEFAULT", "SHELLC_LOCATION", (uintptr_t)std::string("0xdeadbeef").c_str());
+		std::vector<std::string> varArgs;
+		varArgs.push_back(std::string("0xdeadbeef").c_str());
+		createVariable("DEFAULT", "SHELLC_LOCATION",varArgs);
 	}
 	VARIABLE *locVar = (VARIABLE *)getVarByName("SHELLC_LOCATION");
 	memcpy(locVar->varAddr, &locPointer, sizeof(uintptr_t));

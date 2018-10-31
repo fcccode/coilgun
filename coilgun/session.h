@@ -47,7 +47,6 @@ public:
 	int addType(std::string typeName,int size, int outputFormat);
 	int addFunc(std::string dllName, std::string funcName, int NumOfArgs, std::string returnType);
 	int defineStruct(std::string structName, std::vector<std::string> fieldTypes);
-	int defineStruct(std::string structName, int numOfFields);
 	
 	int loadLibrary(std::string dllName);
 	
@@ -55,10 +54,13 @@ public:
 	void editVar(int field,std::string newVal,std::string varName);
 	void editFunc(int field, std::string newVal, std::string funcName);
 
+	int createVariable(std::string type, std::string Name, std::vector<std::string> values);
+
+	int processStructData(STRUCTURE * structToFill, void * dstAddr, std::vector<std::string> values);
+
 	int processStructData(STRUCTURE * structToFill, void * dstAddr);
 	int processData(std::string data, int size, void* dstAddr);
 	
-	int createVariable(std::string type, std::string Name, uintptr_t data);
 
 	int deleteVariable(std::string varName);
 

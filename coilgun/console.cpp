@@ -62,7 +62,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 			}
 			else if (tokens.at(1).compare("edit") == 0) {
 				if (tokensSize > 2) {
-					if (tokens.at(2).compare("type")==0) {
+					if (tokens.at(2).compare("type") == 0) {
 						printf("[*] in type you can edit following fields: size, fmt (format), name\n");
 					}
 					else if (tokens.at(2).compare("var") == 0) {
@@ -112,25 +112,29 @@ void console::parseInput(std::vector<std::string> tokens) {
 		transformLower(tokens.at(1));
 		if (tokens.at(1).compare("var") == 0) {
 			// call add variable
-			int format = FORMAT_HEX;
-			std::pair<int, uintptr_t> result;
-			if (tokensSize > 4) {
-				this->curSession.createVariable(tokens.at(2), tokens.at(3), (uintptr_t)tokens.at(4).c_str()); // placeholder
-			}
-			else if(tokensSize == 4){
-				this->curSession.createVariable(tokens.at(2), tokens.at(3), 0);
-			}
-			else {
+			if (tokensSize < 4) {
 				printf("[-] Too few arguments\n");
+				return;
 			}
+			int format = FORMAT_HEX;
+			std::vector<std::string> varArgs;
+			if (tokensSize > 4) {
+				for (int i = 4; i < tokensSize ; i++) {
+					varArgs.push_back(tokens.at(i));
+				}
+
+			}
+			this->curSession.createVariable(tokens.at(2), tokens.at(3), varArgs);
 		}
+
+
 		else if (tokens.at(1).compare("type") == 0) {
 			// call add type
 			if (tokensSize >= 5) {
 				if (tokens.at(4).compare("hex") == 0) {
 					this->curSession.addType(tokens.at(2), atoi(tokens.at(3).c_str()), FORMAT_HEX);
 				}
-				else if(tokens.at(4).compare("str") == 0){
+				else if (tokens.at(4).compare("str") == 0) {
 					this->curSession.addType(tokens.at(2), atoi(tokens.at(3).c_str()), FORMAT_STRING);
 				}
 				else if (tokens.at(4).compare("int") == 0) {
@@ -141,14 +145,14 @@ void console::parseInput(std::vector<std::string> tokens) {
 				}
 
 			}
-			else if(tokensSize == 4){
+			else if (tokensSize == 4) {
 				this->curSession.addType(tokens.at(2), atoi(tokens.at(3).c_str()), FORMAT_HEX); // default
 			}
 			else
 			{
 				printf("[-] Too few arguments\n");
 			}
-			
+
 		}
 		else if (tokens.at(1).compare("func") == 0) {
 			// call add function
@@ -183,7 +187,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 				for (int i = 1; i <= 3; i++) {
 					tokens.erase(tokens.begin());//remove cmd name
 				}
-				this->curSession.defineStruct(tokens.at(2), tokens);
+				this->curSession.defineStruct(structName, tokens);
 			}
 			else {
 				printf("[-] Please speicify at least one type\n");
@@ -193,7 +197,9 @@ void console::parseInput(std::vector<std::string> tokens) {
 			printf("[-] Unknown type for add command\n");
 			return;
 		}
+
 	}
+
 	else if (tokens.at(0).compare("load") == 0) {
 		if (tokensSize < 2) {
 			printf("[-] Please provide library name\n");
