@@ -312,38 +312,25 @@ void console::parseInput(std::vector<std::string> tokens) {
 		else {
 			transformLower(tokens.at(1));
 			if (tokens.at(1).compare("read") == 0) {
-				printf("[?] addr, size: ");
-				std::string tmpInput;
-				std::vector<std::string> tmpTokens;
-				std::getline(std::cin, tmpInput);
-				tmpTokens = delimitString(tmpInput);
-				size_t tmpSize = tmpTokens.size();
-				if (tmpSize != 2) {
+				if (tokensSize < 4) {
 					printf("[-] Wrong amount of arguments\n");
 					return;
 				}
 				else {
-					
 					uintptr_t *dstPointer = (uintptr_t*) malloc(sizeof(uintptr_t));
 					if (dstPointer == nullptr) {
 						printf("[-] Allocation error\n");
 						return;
 					}
-					this->curSession.processData(tmpTokens.at(0), atoi(tmpTokens.at(1).c_str()), dstPointer);
+					this->curSession.processData(tokens.at(2), sizeof(uintptr_t), dstPointer); //read hex addr into dstpointer
 					printf("[+] Data: ");
-					this->curSession.printWithFormat(atoi(tmpTokens.at(1).c_str()), (uintptr_t*)*dstPointer, FORMAT_HEX);
+					this->curSession.printWithFormat(atoi(tokens.at(3).c_str()), (uintptr_t*)*dstPointer, FORMAT_HEX);
 					free(dstPointer);
 				}
 				
 			}
 			else if (tokens.at(1).compare("write") == 0) {
-				printf("[?] addr, size, value: ");
-				std::string tmpInput;
-				std::vector<std::string> tmpTokens;
-				std::getline(std::cin, tmpInput);
-				tmpTokens = delimitString(tmpInput);
-				size_t tmpSize = tmpTokens.size();
-				if (tmpSize != 3) {
+				if (tokensSize < 5) {
 					printf("[-] Wrong amount of arguments\n");
 					return;
 				}
@@ -352,8 +339,8 @@ void console::parseInput(std::vector<std::string> tokens) {
 					printf("[-] Allocation error\n");
 					return;
 				}
-				this->curSession.processData(tmpTokens.at(0), atoi(tmpTokens.at(1).c_str()), dstPointer);
-				this->curSession.processData(tmpTokens.at(2), atoi(tmpTokens.at(1).c_str()), (uintptr_t*)*dstPointer);
+				this->curSession.processData(tokens.at(2), sizeof(uintptr_t), dstPointer); //read pointer
+				this->curSession.processData(tokens.at(4), atoi(tokens.at(3).c_str()), (uintptr_t*)*dstPointer);
 				free(dstPointer);
 
 			}

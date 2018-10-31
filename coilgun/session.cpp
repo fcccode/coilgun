@@ -374,6 +374,7 @@ int session::processData(std::string data, int size, void* dstAddr) {
 	if (data.empty()) {
 		return PROCESSING_OK;
 	}
+	memset(dstAddr, 0, size);
 	switch (data[0])
 	{
 	case '0':
@@ -488,7 +489,9 @@ void session::printVariableValue(std::string varName)
 	}
 	if (!found) {
 		printf("[-] Variable with that name wasn't found\n");
+		return;
 	}
+	
 	curElement = (VARIABLE *)getVarByName(varName);
 	if (curElement->type.typeStruct != nullptr) {
 		STRUCTURE *tmpStruct = (STRUCTURE *)curElement->type.typeStruct;
