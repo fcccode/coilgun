@@ -374,7 +374,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 				if (tokens.at(3).compare("name") == 0) {
 					field_type = TYPE_FIELD_NAME;
 				}
-				else if (tokens.at(3).compare("val") == 0) {
+				else if (tokens.at(3).compare("val") == 0) { 
 					field_type = TYPE_FIELD_VAL;
 				}
 				else if (tokens.at(3).compare("addr") == 0) {
@@ -382,6 +382,16 @@ void console::parseInput(std::vector<std::string> tokens) {
 				}
 				else if (tokens.at(3).compare("type") == 0) {
 					field_type = TYPE_FIELD_TYPE;
+				}
+				else if (tokens.at(3).compare("field") == 0) { // for structs only
+					if (tokensSize < 6) {
+						printf("[-] Provide field value\n");
+						return;
+					}
+					field_type = TYPE_FIELD_FIELD;
+					//pack data
+					tokens.at(4) += "!" + tokens.at(5);
+					
 				}
 				if (field_type != 0) {
 					this->curSession.editVar(field_type, tokens.at(4), tokens.at(2));

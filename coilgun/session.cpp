@@ -239,6 +239,31 @@ void session::editVar(int field, std::string newVal, std::string varName)
 		if (processData(newVal, sizeof(uintptr_t), &(tmpVar->varAddr)) != PROCESSING_OK) {
 			printf("[-] Error occured while processing input\n");
 		}
+	case TYPE_FIELD_FIELD:
+		//check if struct;
+		if (tmpVar->type.typeStruct == NULL) {
+			printf("[-] Variable is not a structure\n");
+		}
+		//unpack data
+		int fieldNum = atoi(newVal.substr(0, newVal.find_first_of('!')).c_str());
+		newVal = newVal.substr(newVal.find_first_of('!') + 1);
+		//find offset
+		uintptr_t basePointer = (uintptr_t)tmpVar->varAddr;
+		STRUCTURE *structData = (STRUCTURE *)tmpVar->type.typeStruct;
+		long long int offset = 0;
+		if (fieldNum > structData->fields.size() - 1) {
+			printf("[-] field number out of bounds\n");
+			return;
+		}
+		for (int i = 0; i < fieldNum; i++) {
+			offset += structData->fields.at(i).size;
+		}
+		
+		//sum pointer and offset
+		basePointer += offset;
+		if (processData(newVal, structData->fields.at(fieldNum).size, (void *) basePointer) != PROCESSING_OK) {
+			printf("[-] Error occured while processing input\n");
+		}
 	}
 	
 
