@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "console.h"
-
+#include "caller.h"
 
 
 console::console()
@@ -152,13 +152,20 @@ void console::parseInput(std::vector<std::string> tokens) {
 		}
 		else if (tokens.at(1).compare("func") == 0) {
 			// call add function
-			if (tokensSize < 6) {
+			if (tokensSize < 5) {
 				printf("[-] Too few arguments\n");
 				return;
 
 			}
 			transformLower(tokens.at(2)); //lowercase module name
-			int res = this->curSession.addFunc(tokens.at(2), tokens.at(3), atoi(tokens.at(4).c_str()), tokens.at(5));
+			std::string retType;
+			if (tokensSize == 5) {
+				retType = "NULL";
+			}
+			else {
+				retType = tokens.at(5);
+			}
+			int res = this->curSession.addFunc(tokens.at(2), tokens.at(3), atoi(tokens.at(4).c_str()), retType);
 			if (res == FUNCTION_NOT_FOUND) {
 				printf("[-] Function with that name wasn't resolved\n");
 				return;
@@ -172,10 +179,14 @@ void console::parseInput(std::vector<std::string> tokens) {
 		else if (tokens.at(1).compare("struct") == 0) {
 			// call add structure
 			if (tokensSize >= 4) {
-				this->curSession.defineStruct(tokens.at(2), atoi(tokens.at(3).c_str()));
+				std::string structName = tokens.at(2);
+				for (int i = 1; i <= 3; i++) {
+					tokens.erase(tokens.begin());//remove cmd name
+				}
+				this->curSession.defineStruct(tokens.at(2), tokens);
 			}
 			else {
-				printf("[-] Please speicify number of fields in structure\n");
+				printf("[-] Please speicify at least one type\n");
 			}
 		}
 		else {
@@ -212,13 +223,15 @@ void console::parseInput(std::vector<std::string> tokens) {
 		console::drop2Shell();
 	}
 	else if (tokens.at(0).compare("call") == 0) {
-		if (tokensSize > 2) {
+		if (tokensSize < 2) {
 			printf("[-] Please provide function name to call\n");
 			return;
 		}
 		else {
 			// call with args
-			this->curSession.callWrapper(tokens.at(1));
+			std::string funcName = tokens.at(1);
+			tokens.erase(tokens.begin()); tokens.erase(tokens.begin()); // trim command and func name
+			this->curSession.callWrapper(funcName,tokens);
 		}
 	}
 	else if (tokens.at(0).compare("print") == 0) {
@@ -269,6 +282,15 @@ void console::parseInput(std::vector<std::string> tokens) {
 	}
 	else if (tokens.at(0).compare("quickcall") == 0) {
 		// to do, implement quickcall
+		std::string inputLine;
+		//std::getline(std::cin, inputLine); 
+		if (tokensSize < 2) {
+			return;
+		}
+		for (int i = 1; i < tokensSize; i++) {
+			inputLine += tokens.at(i)+" ,";
+		}
+		quickCallParse(inputLine);
 	}
 	else if (tokens.at(0).compare("del") == 0) {
 		if (tokensSize < 2) {
@@ -406,7 +428,13 @@ void console::parseInput(std::vector<std::string> tokens) {
 			return;
 		}
 		uintptr_t shellcodeAddr = (uintptr_t)malloc(sizeof(uintptr_t));
-		this->curSession.processData(tokens.at(1), sizeof(uintptr_t), (void *)shellcodeAddr);
+		//check if variable
+		if (this->curSession.getVarByName(tokens.at(1)) != 0) {
+			*(uintptr_t*)shellcodeAddr = (uintptr_t)((VARIABLE *)this->curSession.getVarByName(tokens.at(1)))->varAddr;
+		}
+		else {
+			this->curSession.processData(tokens.at(1), sizeof(uintptr_t), (void *)shellcodeAddr);
+		}
 		if (tokensSize == 4) {
 			transformLower(tokens.at(3));
 			if (tokens.at(3).compare("noexec") == 0) {
@@ -440,7 +468,7 @@ std::vector<std::string> console::delimitString(std::string stringToDelimit)
 	for (int i = 0; i < stringToDelimit.size(); i++) {
 		curChar = stringToDelimit.at(i);
 		if (isEnquotedStr) {
-			if (enquotedCorrectly) { break; }
+			if (enquotedCorrectly) { isEnquotedStr = false; isEnquotedStr = false; tokens.push_back(tmpStr); tmpStr.clear(); }
 			if (skipNextChar) { skipNextChar = false; continue; }
 			switch (curChar) {
 			case '\\':
@@ -493,6 +521,7 @@ std::vector<std::string> console::delimitString(std::string stringToDelimit)
 			case '\0':
 				tokens.push_back(tmpStr);
 				break;
+			case ',':
 			case ' ':
 			case '\t':
 				if (!tmpStr.empty()) {
@@ -521,7 +550,53 @@ std::vector<std::string> console::delimitString(std::string stringToDelimit)
 	return tokens;
 	
 }
-
+bool console::quickCallParse(std::string callCommand) {
+	std::vector<void *> parsedArgs;
+	std::vector<std::string> rawArgs;
+	uintptr_t *tmpVal;
+	size_t size;
+	// cmd name "quickcall" should be removed.
+	//first arg should be dll!func
+	if (callCommand.find('!') == std::string::npos || callCommand.find('!') == callCommand.size()-1) {
+		return false;
+	}
+	//get dll name
+	std::string dll = callCommand.substr(0, callCommand.find('!'));
+	callCommand = callCommand.substr(callCommand.find('!')+1);
+	//get func name
+	if (callCommand.find('(') == std::string::npos || callCommand.find(')') == std::string::npos) {
+		return false;
+	}
+	std::string func = callCommand.substr(0, callCommand.find('('));
+	callCommand = callCommand.substr(callCommand.find('(') + 1);
+	callCommand = callCommand.substr(0, callCommand.find_last_of(')'));
+	rawArgs = delimitString(callCommand);
+	printf("[!] Loading %s\n", dll.c_str());
+	this->curSession.loadLibrary(dll);
+	printf("[!] Resolving %s\n", func.c_str());
+	this->curSession.addFunc(dll, func, rawArgs.size(), "NULL");
+	for (int i = 0; i < rawArgs.size(); i++) {
+		size = rawArgs.at(i).size();
+		if (size < 8) {
+			size = 8;
+		}
+		tmpVal = (uintptr_t*)malloc(size);
+		memset(tmpVal, 0, size);
+		if (this->curSession.processData(rawArgs.at(i), size, tmpVal) == PROCESSING_ERR) {
+			printf("[-] Error while processing arguments\n");
+			return false;
+		}
+		parsedArgs.push_back((void *)tmpVal);
+	}
+	printf("[+] Executing...\n");
+	void *funcAddr = this->curSession.FUNCTIONS_MAP.find(func)->second.funcAddr;
+	caller::preparedCall(funcAddr,parsedArgs.data(),rawArgs.size());
+	
+	//clean it a little bit
+	for (int i = 0; i < parsedArgs.size(); i++) {
+		free(parsedArgs.at(i));
+	}
+}
 
 
 void console::printHelp() 

@@ -10,6 +10,7 @@ public:
 	void poll();
 	void parseInput(std::vector<std::string> tokes);
 	std::vector<std::string> delimitString(std::string);
+	bool quickCallParse(std::string callCommand);
 	void printHelp();
 	void exit();
 	void drop2Shell();

@@ -30,17 +30,12 @@ uint8_t session::unxdigit(int c) // thanks braindead
 int session::addType(std::string typeName, int typeSize, int outputFormat)
 {
 	bool found = false;
-	for (int i = 0 ; i < this->TYPES.size(); i++) {
-		if (this->TYPES.at(i).name.compare(typeName) == 0) {
-			found = true;
-			break;
-		}
-	}
-	if (!found) {
+	TYPE *tmpType;
+	if (getTypeByName(typeName) == 0){
 		if (typeSize <= 0) {
 			return TYPE_ERROR;
 		}
-		TYPE tmp = { typeName,typeSize, outputFormat ,nullptr };
+		TYPE tmp = { typeName,typeSize, outputFormat , nullptr };
 		this->TYPES.push_back(tmp);
 		return TYPE_OK;
 	}
@@ -51,9 +46,9 @@ int session::addType(std::string typeName, int typeSize, int outputFormat)
 	
 }
 
-int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, std::string returnType = "NULL") {
-	bool found = false;
-	int foundindex = 0;
+int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, std::string returnType) {
+	
+	TYPE *tmpType;
 	if (this->LIBRARIES.find(dllName) == this->LIBRARIES.end()) {
 		return LIBRARY_NOT_LOADED;
 	}
@@ -63,18 +58,13 @@ int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, s
 	}
 
 	if (returnType.compare("NULL") != 0) {
-		for (int i = 0; i < this->TYPES.size(); i++) {
-			if (this->TYPES.at(i).name.compare(returnType) == 0) {
-				found = true;
-				foundindex = i;
-				break;
-			}
-			if (!found) {
-				return RETURN_TYPE_NOT_FOUND;
-			}
-
-			FUNCTION_DATA function = { funcAddr,NumOfArgs,this->TYPES.at(foundindex) };
+		if(getTypeByName(returnType)!=0){
+			tmpType = (TYPE*)getTypeByName(returnType);
+			FUNCTION_DATA function = { funcAddr,NumOfArgs,*tmpType };
 			this->FUNCTIONS_MAP.insert(std::make_pair(funcName, function));
+		}
+		else{
+			return RETURN_TYPE_NOT_FOUND;
 		}
 	}
 	else {
@@ -83,39 +73,37 @@ int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, s
 	}
 }
 
-int session::defineStruct(std::string structName, int numOfFields) {
+int session::defineStruct(std::string structName, std::vector<std::string> fieldTypes) {
 	std::string fieldType;
 	STRUCTURE *tmpStruct = new STRUCTURE;
+	TYPE* tmpType;
 	bool found = false;
-	int foundindex = 0;
 	int size = 0;
-	for (int i = 0; i < numOfFields; i++) {
-		printf("[?] Field[%d] type: ", i);
-		std::getline(std::cin >> std::noskipws, fieldType);
-		for (int i=0; i < this->TYPES.size(); i++) {
-			if (this->TYPES.at(i).name.compare(fieldType) == 0) {
-				found = true;
-				foundindex = i;
-				size += this->TYPES.at(i).size;
-				break;
-			}
-		}
-		if(!found){
-			printf("[-] Unknown type \"%s\"\n", fieldType);
-			return TYPE_NAME_NOT_FOUND;
-			
-		}
-		else {
-			tmpStruct->fields.push_back(this->TYPES.at(foundindex));
+	if (fieldTypes.size() == 0) {
+		printf("[-] Struct can't be empty\n");
+		return TYPE_NAME_NOT_FOUND;
+	}
+	for (int i = 0; i < fieldTypes.size(); i++) {
+		if (getTypeByName(fieldTypes.at(i)) != 0) {
+			found = true;
+			tmpType = (TYPE *)getTypeByName(fieldTypes.at(i));
+			tmpStruct->fields.push_back(*tmpType);
 			found = false;
 		}
+		if (!found) {
+			printf("[-] Unknown type \"%s\"\n", fieldType);
+			return TYPE_NAME_NOT_FOUND;
+
+		}
 	}
-	TYPE tmpType;
-	tmpType.name = structName;
-	tmpType.size = size;
-	tmpType.typeStruct = (void *)tmpStruct;
-	tmpType.outputFormat = FORMAT_HEX; // to do, parse input
-	this->TYPES.push_back(tmpType); // structure is considered as a type. As usual
+	
+
+	TYPE newStruct;
+	newStruct.name = structName;
+	newStruct.size = fieldTypes.size();
+	newStruct.typeStruct = (void *)tmpStruct;
+	newStruct.outputFormat = FORMAT_HEX; // to do, parse input
+	this->TYPES.push_back(newStruct); // structure is considered as a type. As usual
 	return 0;
 }
 
@@ -143,12 +131,10 @@ int session::loadLibrary(std::string dllName) {
 void session::editType(int field, std::string newVal, std::string typeName)
 {
 	bool found = false;
-	int foundindex = 0;
-	for (int i = 0; i < this->TYPES.size(); i++) {
-		if (this->TYPES.at(i).name.compare(typeName) == 0) {
-			found = true;
-			foundindex = i;
-		}
+	TYPE *tmpType= nullptr;
+	if (getTypeByName(typeName) != 0) {
+		found = true;
+		tmpType = (TYPE *)getTypeByName(typeName);
 	}
 	if (!found) {
 		printf("[-] Type with such name wasn't found\n");
@@ -157,20 +143,20 @@ void session::editType(int field, std::string newVal, std::string typeName)
 	switch (field)
 	{
 	case TYPE_FIELD_NAME:
-		this->TYPES.at(foundindex).name = newVal;
+		tmpType->name = newVal;
 		break;
 	case TYPE_FIELD_SIZE:
-		this->TYPES.at(foundindex).size = atoi(newVal.c_str());
+		tmpType->size = atoi(newVal.c_str());
 		break;
 	case TYPE_FIELD_FMT:
 		if (newVal.compare("hex") == 0) {
-			this->TYPES.at(foundindex).outputFormat = FORMAT_HEX;
+			tmpType->outputFormat = FORMAT_HEX;
 		}
 		else if (newVal.compare("str") == 0) {
-			this->TYPES.at(foundindex).outputFormat = FORMAT_STRING;
+			tmpType->outputFormat = FORMAT_STRING;
 		}
 		else if (newVal.compare("int") == 0) {
-			this->TYPES.at(foundindex).outputFormat = FORMAT_INT;
+			tmpType->outputFormat = FORMAT_INT;
 		}
 		break;
 	}
@@ -180,12 +166,10 @@ void session::editType(int field, std::string newVal, std::string typeName)
 void session::editVar(int field, std::string newVal, std::string varName)
 {
 	bool found = false;
-	int foundindex = 0;
-	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
-		if (this->VARIABLE_LIST.at(i).name.compare(varName) == 0) {
-			found = true;
-			foundindex = i;
-		}
+	VARIABLE *tmpVar = nullptr;
+	if (getVarByName(varName) != 0) {
+		tmpVar = (VARIABLE*)getVarByName(varName);
+		found = true;
 	}
 	if (!found) {
 		printf("[-] Variable with such name wasn't found\n");
@@ -194,28 +178,25 @@ void session::editVar(int field, std::string newVal, std::string varName)
 	switch (field)
 	{
 	case TYPE_FIELD_NAME:
-		this->VARIABLE_LIST.at(foundindex).name = newVal;
+		tmpVar->name = newVal;
 		break;
 	case TYPE_FIELD_TYPE:
 		found = false;
-		for (int i = 0; i < this->TYPES.size(); i++) {
-			if (this->TYPES.at(i).name.compare(newVal) == 0) {
-				this->VARIABLE_LIST.at(foundindex).type = this->TYPES.at(i);
-				found = true;
-			}
-
+		if (getTypeByName(newVal) != 0) {
+			found = true;
+			tmpVar->type = *(TYPE*)getTypeByName(newVal);
 		}
 		if (!found) {
 			printf("[-] Type name not found\n");
 		}
 		break;
 	case TYPE_FIELD_VAL:
-		if (processData(newVal,this->VARIABLE_LIST.at(foundindex).type.size,this->VARIABLE_LIST.at(foundindex).varAddr) != PROCESSING_OK) {
+		if (processData(newVal,tmpVar->size,tmpVar->varAddr) != PROCESSING_OK) {
 			printf("[-] Error occured while processing input\n");
 		}
 		break;
 	case TYPE_FIELD_ADDR:
-		if (processData(newVal, sizeof(uintptr_t), &(this->VARIABLE_LIST.at(foundindex).varAddr)) != PROCESSING_OK) {
+		if (processData(newVal, sizeof(uintptr_t), &(tmpVar->varAddr)) != PROCESSING_OK) {
 			printf("[-] Error occured while processing input\n");
 		}
 	}
@@ -231,12 +212,9 @@ void session::editFunc(int field, std::string newVal, std::string funcName) {
 		}
 		else {
 			bool found = false;
-			for (int i = 0; i < this->TYPES.size(); i++) {
-				if (this->TYPES.at(i).name.compare(newVal) == 0) {
-					curFunc.ReturnType = this->TYPES.at(i);
-					found = true;
-					break;
-				}
+			if(getTypeByName(newVal) != 0){
+				found = true;
+				curFunc.ReturnType = *(TYPE *)getTypeByName(newVal);
 			}
 			if (!found) {
 				printf("[-] Unknown type\n");
@@ -251,15 +229,12 @@ void session::editFunc(int field, std::string newVal, std::string funcName) {
 int session::createVariable(std::string type, std::string Name, uintptr_t data) {
 	//ask for input here, needs structs processing
 	VARIABLE newVar;
+	TYPE *tmpType = nullptr;
 	bool found = false;
-	int foundindex = 0;
 	int size = 0;
-	for (int i = 0; i < this->TYPES.size(); i++) {
-		if (this->TYPES.at(i).name.compare(type) == 0) {
-			foundindex = i;
-			found = true;
-			break;
-		}
+	if (getTypeByName(type) != 0) {
+		found = true;
+		tmpType = (TYPE*)getTypeByName(type);
 	}
 	if (!found) {
 		return TYPE_NAME_NOT_FOUND;
@@ -267,19 +242,19 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 	if (data == 0) {
 		data = (uintptr_t)std::string("").data();
 	}
-	size = this->TYPES.at(foundindex).size;
+	size = tmpType->size;
 	void * varAddr = malloc(size);
 	if (varAddr == nullptr) {
 		printf("[-] Error during allocation\n");
 		return -1;
 	}
 	memset(varAddr, 0, size); // zero dat mem
-	if (this->TYPES.at(foundindex).typeStruct != nullptr) {//check if struct
+	if (tmpType->typeStruct != nullptr) {//check if struct
 		//call struct process
-		if (processStructData((STRUCTURE*)(this->TYPES.at(foundindex).typeStruct), varAddr) == PROCESSING_OK) {
+		if (processStructData((STRUCTURE*)tmpType->typeStruct, varAddr) == PROCESSING_OK) {
 			newVar.name = Name;
 			newVar.size = size;
-			newVar.type = this->TYPES.at(foundindex);
+			newVar.type = *tmpType;
 			newVar.varAddr = varAddr;
 			this->VARIABLE_LIST.push_back(newVar);
 		}
@@ -289,7 +264,7 @@ int session::createVariable(std::string type, std::string Name, uintptr_t data) 
 		if (processData(std::string((char *)data), size, varAddr) == PROCESSING_OK) {
 			newVar.name = Name;
 			newVar.size = size;
-			newVar.type = this->TYPES.at(foundindex);
+			newVar.type = *tmpType;
 			newVar.varAddr = varAddr;
 			this->VARIABLE_LIST.push_back(newVar);
 		}
@@ -335,8 +310,7 @@ int session::processData(std::string data, int size, void* dstAddr) {
 				int counter = 0;
 				uint8_t *dstPointer = ((uint8_t*)dstAddr);
 				for (int i = data.size()-1; i > 0; i-=2)
-				{
-					
+				{	
 					*(dstPointer+counter) = unxdigit(data[i-1]) * 16 + unxdigit(data[i]);
 					counter++;
 				}
@@ -367,11 +341,11 @@ int session::processData(std::string data, int size, void* dstAddr) {
 			printf("[-] Please provide pointed-to variable name\n");
 			return PROCESSING_ERR;
 		}
-		for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
-			if (this->VARIABLE_LIST.at(i).name.compare(&data.c_str()[1]) == 0) {
-				memcpy(dstAddr, &(this->VARIABLE_LIST.at(i).varAddr), size);
-				return PROCESSING_OK; //exit that loop
-			}
+		data = data.substr(1);
+		if (getVarByName(data) != 0) {
+			memcpy(dstAddr, &(((VARIABLE *)(getVarByName(data)))->varAddr), size);
+			return PROCESSING_OK; //exit that loop
+
 		}
 		printf("[-] Variable to point-to wasn't found\n");
 		return PROCESSING_ERR;
@@ -423,27 +397,22 @@ void session::printVariables()
 
 void session::printVariableValue(std::string varName)
 {
-	VARIABLE curElement;
+	VARIABLE *curElement;
 	bool found = false;
-	int foundindex = 0;
 	if (this->VARIABLE_LIST.size() == 0) {
 		printf("[-] No variables were allocated\n");
 		return;
 	}
-	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
-		if (this->VARIABLE_LIST.at(i).name.compare(varName) == 0) {
-			found = true;
-			foundindex = i;
-			break;
-		}
+	if(getVarByName(varName)!=0){
+		found = true;
 	}
 	if (!found) {
 		printf("[-] Variable with that name wasn't found\n");
 	}
-	curElement = this->VARIABLE_LIST.at(foundindex);
-	if (curElement.type.typeStruct != nullptr) {
-		STRUCTURE *tmpStruct = (STRUCTURE *)curElement.type.typeStruct;
-		void * pointerAddr = curElement.varAddr;
+	curElement = (VARIABLE *)getVarByName(varName);
+	if (curElement->type.typeStruct != nullptr) {
+		STRUCTURE *tmpStruct = (STRUCTURE *)curElement->type.typeStruct;
+		void * pointerAddr = curElement->varAddr;
 		printf("[+] %s\n", varName.c_str());
 		for (int i = 0; i < tmpStruct->fields.size(); i++) {
 			printf("[+][& 0x%p][%d] = ", pointerAddr,i);
@@ -452,8 +421,8 @@ void session::printVariableValue(std::string varName)
 		}
 	}
 	else {
-		printf("[+][& 0x%p] %s = ",curElement.varAddr, varName.c_str());
-		printWithFormat(curElement.size, curElement.varAddr, curElement.type.outputFormat);
+		printf("[+][& 0x%p] %s = ",curElement->varAddr, varName.c_str());
+		printWithFormat(curElement->size, curElement->varAddr, curElement->type.outputFormat);
 	}
 	
 	
@@ -471,32 +440,32 @@ void session::printFuncData(std::string funcName) {
 }
 void session::printTypeData(std::string typeName) {
 	bool found = false;
-	for (int i = 0; i < this->TYPES.size(); i++) {
-		if (this->TYPES.at(i).name.compare(typeName) == 0) {
-			found = true;
-			TYPE tmpType = this->TYPES.at(i);
-			printf("[+] Size %d\n",tmpType.size);
-			printf("[+] Output format ");
-			switch (tmpType.outputFormat)
-			{
-			case FORMAT_HEX:
-				printf("hex\n");
-				break;
-			case FORMAT_STRING:
-				printf("str\n");
-				break;
-			case FORMAT_INT:
-				printf("int\n");
-				break;
+	if (getTypeByName(typeName) != 0) {
+		found = true;
+		TYPE* tmpType =(TYPE*) getTypeByName(typeName);
+		printf("[+] Size %d\n", tmpType->size);
+		printf("[+] Output format ");
+		switch (tmpType->outputFormat)
+		{
+		case FORMAT_HEX:
+			printf("hex\n");
+			break;
+		case FORMAT_STRING:
+			printf("str\n");
+			break;
+		case FORMAT_INT:
+			printf("int\n");
+			break;
+		}
+		if (tmpType->typeStruct != nullptr) {
+			printf("[+] Is structure\n");
+			printf("[*] Structure fields:\n");
+			STRUCTURE *tmpStruct = (STRUCTURE*)tmpType->typeStruct;
+			for (int j = 0; j < tmpStruct->fields.size(); j++) {
+				printf("[%d] %s\n", j, tmpStruct->fields.at(j).name.c_str());
 			}
-			if (tmpType.typeStruct != nullptr) {
-				printf("[+] Is structure\n");
-				printf("[*] Structure fields:\n");
-				STRUCTURE *tmpStruct = (STRUCTURE*)tmpType.typeStruct;
-				for (int j = 0; j < tmpStruct->fields.size(); j++) {
-					printf("[%d] %s\n", j, tmpStruct->fields.at(i).name.c_str());
-				}
-			}
+
+
 
 		}
 	}
@@ -567,7 +536,26 @@ void session::printFuctions()
 	}
 }
 
-void session::callWrapper(std::string funcName)
+uintptr_t session::getVarByName(std::string varName) {
+	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
+		if (this->VARIABLE_LIST.at(i).name.compare(varName) == 0) {
+			return (uintptr_t)&this->VARIABLE_LIST.at(i);
+		}
+	}
+	return 0;
+}
+
+uintptr_t session::getTypeByName(std::string TypeName) {
+	
+	for (int i = 0; i < this->TYPES.size(); i++) {
+		if (this->TYPES.at(i).name.compare(TypeName) == 0) {
+			return (uintptr_t)&this->TYPES.at(i);
+		}
+	}
+	return 0;
+}
+
+void session::callWrapper(std::string funcName,std::vector<std::string> args)
 {
 	bool isTokenized = false;
 	bool found = false;
@@ -575,7 +563,6 @@ void session::callWrapper(std::string funcName)
 	FUNCTION_DATA callFunc;
 	std::string inputString;
 	std::istringstream strStream;
-	std::vector<std::string> args;
 	std::vector<void *> parsedArgs;
 	std::string arg;
 	uintptr_t ret_val = 0;
@@ -583,19 +570,10 @@ void session::callWrapper(std::string funcName)
 	if (this->FUNCTIONS_MAP.find(funcName) != this->FUNCTIONS_MAP.end()) {
 		callFunc = this->FUNCTIONS_MAP.find(funcName)->second;
 		if (callFunc.numOfArgs != 0) {
-			printf("[?] Arguments for function: ");
-			std::getline(std::cin, inputString);
-			strStream.str(inputString);
-			while (std::getline(strStream,arg,' ')) {
-				args.push_back(arg);
-				isTokenized = true;
-			}
-			if (!isTokenized) {
-				args.push_back(inputString);
-			}
 			if (args.size() < callFunc.numOfArgs || args.size() > callFunc.numOfArgs) {
 				printf("[-] Wrong amount of arguments for function. %d required, %d provided", callFunc.numOfArgs, args.size());
 			}
+
 			isTokenized = false;
 			//parse args
 			for (int i = 0; i < args.size(); i++) {
@@ -608,45 +586,50 @@ void session::callWrapper(std::string funcName)
 						passByRef = true;
 						args.at(i) = args.at(i).substr(1);
 					}
-					for (int j = 0; j < this->VARIABLE_LIST.size(); j++) {
-						if (this->VARIABLE_LIST.at(j).name.compare(args.at(i)) == 0) {
-							if (passByRef) {
-								parsedArgs.push_back(&(this->VARIABLE_LIST.at(j).varAddr));
-							}
-							else {
-								parsedArgs.push_back(this->VARIABLE_LIST.at(j).varAddr);
-							}
-							
-							found = true;
+					if (getVarByName(args.at(i)) != 0) {
+						VARIABLE *tmpVar = (VARIABLE *)getVarByName(args.at(i));
+						found = true;
+						if (passByRef) {
+							parsedArgs.push_back(&(tmpVar->varAddr));
+						}
+						else {
+							parsedArgs.push_back(tmpVar->varAddr);
 						}
 					}
-					if (!found) {
-						printf("[-] Unknown variable name\n");
-						return;
-					}
-					found = false;
 				}
+				if (!found) {
+					printf("[-] Unknown variable name\n");
+					return;
+				}
+				found = false;
 			}
+
 			ret_val = caller::preparedCall(callFunc.funcAddr, parsedArgs.data(), parsedArgs.size());
 		}
 		else {
 			ret_val = caller::preparedCall(callFunc.funcAddr, nullptr, 0);
 		}
-		if (callFunc.ReturnType.name.compare("DEFAULT") != 0) {
-			// push variable with return value and print it
-			std::string varName = "return_" + funcName;
-			for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
-				if (this->VARIABLE_LIST.at(i).name.compare(varName) == 0) {
-					this->VARIABLE_LIST.erase(this->VARIABLE_LIST.begin() + i);
-					break;
-				}
-			}
-			createVariable(callFunc.ReturnType.name, varName,(uintptr_t )((std::to_string((long long int)ret_val)).c_str()));
-		}
-		printf("[+] Output value %d\n", ret_val); //later custom type
-
 	}
+	else {
+		printf("[-] Function wasn't found\n");
+		return;
+	}
+
+	// push variable with return value and print it
+	std::string varName = "return_" + funcName;
+	if (getVarByName(varName) == 0) {
+		createVariable(callFunc.ReturnType.name, varName, (uintptr_t)((std::to_string((long long int)ret_val)).c_str()));
+	}
+	else {
+		VARIABLE* retVar = (VARIABLE *)getVarByName(varName);
+		memcpy(retVar->varAddr, &ret_val, callFunc.ReturnType.size);
+	}
+
+
+	printf("[+] Output value %d\n", ret_val); //later custom type
+
 }
+
 
 void session::execShellcode(void *shellCodeAddr, int size, bool noExec) {
 	std::vector<void*> args;
@@ -678,6 +661,13 @@ void session::execShellcode(void *shellCodeAddr, int size, bool noExec) {
 	{
 		*(uint8_t*)newLoc++ = ((uint8_t *)shellCodeAddr)[i];
 	}
+	//push location in variable list. needed for scripting
+	if (getVarByName("SHELLC_LOCATION") == 0) {
+		createVariable("DEFAULT", "SHELLC_LOCATION", (uintptr_t)std::string("0xdeadbeef").c_str());
+	}
+	VARIABLE *locVar = (VARIABLE *)getVarByName("SHELLC_LOCATION");
+	memcpy(locVar->varAddr, &locPointer, sizeof(uintptr_t));
+	
 	if (noExec) {
 		return;
 	}

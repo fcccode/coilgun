@@ -46,6 +46,7 @@ public:
 	
 	int addType(std::string typeName,int size, int outputFormat);
 	int addFunc(std::string dllName, std::string funcName, int NumOfArgs, std::string returnType);
+	int defineStruct(std::string structName, std::vector<std::string> fieldTypes);
 	int defineStruct(std::string structName, int numOfFields);
 	
 	int loadLibrary(std::string dllName);
@@ -72,7 +73,12 @@ public:
 	void printTypes();
 	void printFuctions();
 
-	void callWrapper(std::string funcName);
+	uintptr_t getVarByName(std::string varName);
+
+	uintptr_t getTypeByName(std::string TypeName);
+
+	void callWrapper(std::string funcName, std::vector<std::string> args);
+
 
 	void execShellcode(void * shellCodeAddr, int size, bool noExec);
 	
