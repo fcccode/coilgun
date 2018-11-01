@@ -1,3 +1,4 @@
+![picture text](photo_2018-11-01_16-35-02.jpg)
 
 # Tool description
 This is a tool for Windows post-exploitation which targets windows API (mostly).<br>
@@ -32,5 +33,5 @@ Q: Examples of usage?<br>
 A: Refer to [wiki](https://github.com/owodelta/coilgun/wiki)<br>
 
 # Credits 
-[@1c7718e7](https://github.com/1c7718e7) for help in general<br>
+[@1c7718e7](https://github.com/1c7718e7) for help in general and pretty banner<br>
 [@mikroskeem](https://github.com/mikroskeem) for great suggestions
