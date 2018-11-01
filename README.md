@@ -1,4 +1,5 @@
-![banner](coilgun.svg)
+<img src="coilgun.svg" width="100%"  />
+
 
 # Tool description
 This is a tool for Windows post-exploitation which targets windows API (mostly).<br>
