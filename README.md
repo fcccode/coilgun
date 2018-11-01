@@ -1,9 +1,9 @@
 
 # Tool description
-This is a tool for windows post-explopitation which targets working with windows API.
+This is a tool for windows post-explopitation which targets working with windows API.<br>
 In most of the cases your exploit will be detected before even running it, however this tool will allow you to perform pseudo-scripting in order to exploit the system.
 
-It has variety of options to allow you to create self defined types, structs and variables, and even shellcode execution.
+It has variety of options which allow you to create self defined types, structs and variables, and even shellcode execution.
 
 Please note that it's professional tool, means that the tool won't protect you from your mistakes in most cases.
 
