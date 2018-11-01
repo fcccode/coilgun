@@ -34,74 +34,8 @@ void console::parseInput(std::vector<std::string> tokens) {
 	size_t tmpSize = tokens.size();
 
 	size_t tokensSize = tokens.size();
-	if (tokens.at(0).compare("help") == 0) {
-		if (tokensSize > 1) {
-			transformLower(tokens.at(1));
-			if (tokens.at(1).compare("add") == 0) {
-				//print help for add
-				if (tokensSize == 2) {
-					printf("[*] Use add to create var (variable), type, struct (structures) or func (functions).\n");
-				}
-				else {
-					transformLower(tokens.at(2));
-					if (tokens.at(2).compare("var") == 0) {
-						printf("[*] Use following commad to create variable: add var VARIABLETYPE VARIABLENAME [VALUE]\n");
-					}
-					else if (tokens.at(2).compare("type") == 0) {
-						printf("[*] Use following commad to create type: add type TYPENAME TYPESIZE [OUTPUT_FORMAT]\n");
-					}
-					else if (tokens.at(2).compare("func") == 0) {
-						printf("[*] Use following commad to resolve function: add func LIBRARY FUNCTION_NAME ARGC [RETURN_TYPE\\\"NULL\"]\n");
-					}
-					else if (tokens.at(2).compare("struct") == 0) {
-						printf("[*] Use following commad to create type: add struct STRUCT_NAME NUMBER_OF_FIELDS\n");
-					}
-
-
-				}
-			}
-			else if (tokens.at(1).compare("edit") == 0) {
-				if (tokensSize > 2) {
-					if (tokens.at(2).compare("type") == 0) {
-						printf("[*] in type you can edit following fields: size, fmt (format), name\n");
-					}
-					else if (tokens.at(2).compare("var") == 0) {
-						printf("[*] in var you can edit following fields: name, val (value), type, addr (address)\n");
-					}
-					else if (tokens.at(2).compare("func") == 0) {
-						printf("[*] in var you can edit following fields: argc (number of arguments), ret (return type)\n");
-					}
-				}
-				else {
-					printf("[*] You can edit following items - type, var, func\n[*] Command syntax: edit ITEM FIELD ITEM_NAME NEW_VALUE\n");
-				}
-			}
-			else if (tokens.at(1).compare("load") == 0) {
-				printf("[*] Use load + library name (absolute path also acceptable) to load library for function resolving\n");
-			}
-			else if (tokens.at(1).compare("print") == 0) {
-				printf("[*] Print types, vars or their values\n");
-				printf("[*] Basic data: print ITEM+s -- to print all elements. Ex: print vars, print types\n");
-				printf("[*] Print more info: print ITEM ITEAMNAME. Ex print var myVarName\n");
-			}
-			else if (tokens.at(1).compare("shell") == 0) {
-				printf("[*] It's just dropping you to shell\n");
-			}
-			else if (tokens.at(1).compare("call") == 0) {
-				printf("[*] To call a resolved function use call + functionName\n");
-			}
-			else if (tokens.at(1).compare("shellcode") == 0) {
-				printf("[*] Command syntax: shellcode SHELLCODEADDR SIZE_OF_SHELLCODE [noexec]\n");
-			}
-			else if (tokens.at(1).compare("quickcall") == 0) {
-
-			}
-		}
-		else {
-			console::printHelp();
-		}
-	}
-	else if (tokens.at(0).compare("exit") == 0) {
+	
+	if (tokens.at(0).compare("exit") == 0) {
 		console::exit();
 	}
 	else if (tokens.at(0).compare("add") == 0) {
@@ -199,7 +133,6 @@ void console::parseInput(std::vector<std::string> tokens) {
 		}
 
 	}
-
 	else if (tokens.at(0).compare("load") == 0) {
 		if (tokensSize < 2) {
 			printf("[-] Please provide library name\n");
@@ -450,7 +383,7 @@ void console::parseInput(std::vector<std::string> tokens) {
 
 	}
 	else {
-		printf("[-] Unknown command, use \"help\" for reference\n");
+		printf("[-] Unknown command, use wiki for reference\n");
 		return;
 	}
 
@@ -601,30 +534,11 @@ bool console::quickCallParse(std::string callCommand) {
 	}
 }
 
-
-void console::printHelp() 
-{
-	printf("Use help + commandname to get more info\n");
-	printf("Available commands:\n");
-	printf("[*] help\n");
-	printf("[*] add\n");
-	printf("[*] shell\n");
-	printf("[*] print\n");
-	printf("[*] load\n");
-	printf("[*] call\n");
-	printf("[*] quickcall\n");
-	printf("[*] exit\n");
-	
-
-}
-
 void console::exit()
 {
 	//close the program
 	_exit(0);
 }
-
-
 
 void console::drop2Shell()
 {
