@@ -32,5 +32,5 @@ Q: Examples of usage?<br>
 A: Refer to [wiki](https://github.com/owodelta/coilgun/wiki)<br>
 
 # Credits 
-@1c7718e7 for help in general<br>
-@mikroskeem for great suggestions
+[@1c7718e7](https://github.com/1c7718e7) for help in general<br>
+[@mikroskeem](https://github.com/mikroskeem) for great suggestions
