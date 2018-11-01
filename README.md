@@ -25,6 +25,8 @@ A: x64 only<br>
 Q: I'm getting segfault<br>
 A: Most likely you are guilty of it<br>
 
+Q: Where can i find command reference? There's no help function!<br>
+A: Refer to [wiki](https://github.com/owodelta/coilgun/wiki)<br>
 
 # Credits 
 @1c7718e7 for help in general
