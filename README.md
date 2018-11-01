@@ -1,4 +1,4 @@
-![picture text](photo_2018-11-01_16-35-02.jpg)
+![banner](coilgun.svg)
 
 # Tool description
 This is a tool for Windows post-exploitation which targets windows API (mostly).<br>
