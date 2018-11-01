@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "console.h"
-#include "caller.h"
 
 
 console::console()

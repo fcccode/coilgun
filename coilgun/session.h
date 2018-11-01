@@ -1,11 +1,14 @@
 #pragma once
+#include "stdafx.h"
+#include "session.h"
+#include <sstream>
+#include <iostream>
 #include <string>
+#include <thread>
 #include <map>
-#include <Windows.h>
-#include <locale>
 #include <codecvt>
 #include <vector>
-
+#include "caller.h"
 
 
 

@@ -1,8 +1,11 @@
 #pragma once
 #include <process.h>
 #include <iostream>
-#include "session.h"
 #include <sstream>
+#include "session.h"
+#include "console.h"
+#include "caller.h"
+
 class console
 {
 public:
