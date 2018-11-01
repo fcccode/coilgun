@@ -35,4 +35,5 @@ A: Refer to [wiki](https://github.com/owodelta/coilgun/wiki)<br>
 
 # Credits 
 [@1c7718e7](https://github.com/1c7718e7) for help in general and pretty banner<br>
-[@mikroskeem](https://github.com/mikroskeem) for great suggestions
+[@mikroskeem](https://github.com/mikroskeem) for great suggestions<br>
+[@rebane2001](https://github.com/rebane2001) for giving a loan
