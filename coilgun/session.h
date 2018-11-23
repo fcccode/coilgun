@@ -23,7 +23,7 @@ struct VARIABLE {
 	void * varAddr;
 	unsigned int size;
 	std::string name;
-	TYPE type;
+	TYPE *type;
 };
 
 struct STRUCTURE {
@@ -33,7 +33,7 @@ struct STRUCTURE {
 struct FUNCTION_DATA {
 	void * funcAddr;
 	unsigned int numOfArgs;
-	TYPE ReturnType;
+	TYPE *ReturnType;
 };
 
 

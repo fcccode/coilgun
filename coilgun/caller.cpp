@@ -31,7 +31,3 @@ uintptr_t caller::preparedCall(void * addr, void * args, int argc)
 	return retVal;
 }
 
-void caller::segFaultOccured(int signum)
-{
-	printf("[~] Segfault...\n");
-}

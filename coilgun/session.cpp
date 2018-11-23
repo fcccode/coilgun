@@ -65,7 +65,7 @@ int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, s
 	if (returnType.compare("NULL") != 0) {
 		if(getTypeByName(returnType)!=0){
 			tmpType = (TYPE*)getTypeByName(returnType);
-			FUNCTION_DATA function = { funcAddr,NumOfArgs,*tmpType };
+			FUNCTION_DATA function = { funcAddr,NumOfArgs,tmpType };
 			this->FUNCTIONS_MAP.insert(std::make_pair(funcName, function));
 		}
 		else{
@@ -73,7 +73,7 @@ int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, s
 		}
 	}
 	else {
-		FUNCTION_DATA function = { funcAddr,NumOfArgs,this->TYPES.at(0) /*default entry*/ };
+		FUNCTION_DATA function = { funcAddr,NumOfArgs,&(this->TYPES.at(0)) /*default entry*/ };
 		this->FUNCTIONS_MAP.insert(std::make_pair(funcName, function));
 	}
 }
@@ -220,7 +220,7 @@ void session::editVar(int field, std::string newVal, std::string varName)
 		found = false;
 		if (getTypeByName(newVal) != 0) {
 			found = true;
-			tmpVar->type = *(TYPE*)getTypeByName(newVal);
+			tmpVar->type = (TYPE*)getTypeByName(newVal);
 		}
 		if (!found) {
 			printf("[-] Type name not found\n");
@@ -237,7 +237,7 @@ void session::editVar(int field, std::string newVal, std::string varName)
 		}
 	case TYPE_FIELD_FIELD:
 		//check if struct;
-		if (tmpVar->type.typeStruct == NULL) {
+		if (tmpVar->type->typeStruct == NULL) {
 			printf("[-] Variable is not a structure\n");
 		}
 		//unpack data
@@ -245,7 +245,7 @@ void session::editVar(int field, std::string newVal, std::string varName)
 		newVal = newVal.substr(newVal.find_first_of('!') + 1);
 		//find offset
 		uintptr_t basePointer = (uintptr_t)tmpVar->varAddr;
-		STRUCTURE *structData = (STRUCTURE *)tmpVar->type.typeStruct;
+		STRUCTURE *structData = (STRUCTURE *)tmpVar->type->typeStruct;
 		long long int offset = 0;
 		if (fieldNum > structData->fields.size() - 1) {
 			printf("[-] field number out of bounds\n");
@@ -275,7 +275,7 @@ void session::editFunc(int field, std::string newVal, std::string funcName) {
 			bool found = false;
 			if(getTypeByName(newVal) != 0){
 				found = true;
-				curFunc.ReturnType = *(TYPE *)getTypeByName(newVal);
+				curFunc.ReturnType = (TYPE *)getTypeByName(newVal);
 			}
 			if (!found) {
 				printf("[-] Unknown type\n");
@@ -330,7 +330,7 @@ int session::createVariable(std::string type, std::string Name, std::vector<std:
 		if (processStructData((STRUCTURE*)tmpType->typeStruct, varAddr,values) == PROCESSING_OK) {
 			newVar.name = Name;
 			newVar.size = size;
-			newVar.type = *tmpType;
+			newVar.type = tmpType;
 			newVar.varAddr = varAddr;
 			this->VARIABLE_LIST.push_back(newVar);
 		}
@@ -340,7 +340,7 @@ int session::createVariable(std::string type, std::string Name, std::vector<std:
 		if (processData(std::string((char *)data), size, varAddr) == PROCESSING_OK) {
 			newVar.name = Name;
 			newVar.size = size;
-			newVar.type = *tmpType;
+			newVar.type = tmpType;
 			newVar.varAddr = varAddr;
 			this->VARIABLE_LIST.push_back(newVar);
 		}
@@ -472,7 +472,7 @@ void session::printVariables()
 	VARIABLE curElement;
 	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
 		curElement = this->VARIABLE_LIST.at(i);
-		printf("[%d] %s %s\n", i, curElement.type.name.c_str(), curElement.name.c_str());
+		printf("[%d] %s %s\n", i, curElement.type->name.c_str(), curElement.name.c_str());
 	}
 }
 
@@ -493,8 +493,8 @@ void session::printVariableValue(std::string varName)
 	}
 	
 	curElement = (VARIABLE *)getVarByName(varName);
-	if (curElement->type.typeStruct != nullptr) {
-		STRUCTURE *tmpStruct = (STRUCTURE *)curElement->type.typeStruct;
+	if (curElement->type->typeStruct != nullptr) {
+		STRUCTURE *tmpStruct = (STRUCTURE *)curElement->type->typeStruct;
 		void * pointerAddr = curElement->varAddr;
 		printf("[+] %s\n", varName.c_str());
 		for (int i = 0; i < tmpStruct->fields.size(); i++) {
@@ -505,7 +505,7 @@ void session::printVariableValue(std::string varName)
 	}
 	else {
 		printf("[+][& 0x%p] %s = ",curElement->varAddr, varName.c_str());
-		printWithFormat(curElement->size, curElement->varAddr, curElement->type.outputFormat);
+		printWithFormat(curElement->size, curElement->varAddr, curElement->type->outputFormat);
 	}
 	
 	
@@ -515,7 +515,7 @@ void session::printFuncData(std::string funcName) {
 		FUNCTION_DATA tmpFunc = this->FUNCTIONS_MAP.find(funcName)->second;
 		printf("[+] Address 0x%p \n", (uintptr_t)tmpFunc.funcAddr);
 		printf("[+] Required argc %d \n", tmpFunc.numOfArgs);
-		printf("[+] Return type %s \n", tmpFunc.ReturnType.name.c_str());
+		printf("[+] Return type %s \n", tmpFunc.ReturnType->name.c_str());
 	}
 	else {
 		printf("[-] Function wasn't found\n");
@@ -712,11 +712,11 @@ void session::callWrapper(std::string funcName,std::vector<std::string> args)
 	if (getVarByName(varName) == 0) {
 		std::vector<std::string> args;
 		args.push_back(((std::to_string((long long int)ret_val)).c_str()));
-		createVariable(callFunc.ReturnType.name, varName, args);
+		createVariable(callFunc.ReturnType->name, varName, args);
 	}
 	else {
 		VARIABLE* retVar = (VARIABLE *)getVarByName(varName);
-		memcpy(retVar->varAddr, &ret_val, callFunc.ReturnType.size);
+		memcpy(retVar->varAddr, &ret_val, callFunc.ReturnType->size);
 	}
 
 
@@ -768,7 +768,7 @@ void session::execShellcode(void *shellCodeAddr, int size, bool noExec) {
 		return;
 	}
 	printf("[+] Executing shellcode\n");
-	
+
 	std::thread shellcThr = std::thread(caller::shellcodeCall, (void*)locPointer);
 	
 	if (shellcThr.joinable()) {
