@@ -1,3 +1,5 @@
+<img src="coilgun.svg" width="100%"  />
+
 
 # Tool description
 This is a tool for Windows post-exploitation which targets windows API (mostly).<br>
@@ -32,5 +34,6 @@ Q: Examples of usage?<br>
 A: Refer to [wiki](https://github.com/owodelta/coilgun/wiki)<br>
 
 # Credits 
-[@1c7718e7](https://github.com/1c7718e7) for help in general<br>
-[@mikroskeem](https://github.com/mikroskeem) for great suggestions
+[@1c7718e7](https://github.com/1c7718e7) for help in general and pretty banner<br>
+[@mikroskeem](https://github.com/mikroskeem) for great suggestions<br>
+[@rebane2001](https://github.com/rebane2001) for giving a loan
