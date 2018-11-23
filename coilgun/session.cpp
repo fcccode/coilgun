@@ -4,11 +4,11 @@
 session::session()
 {
 	//initialize known types, not all tho
-	TYPE DEFAULT;
-	DEFAULT.name = "DEFAULT";
-	DEFAULT.size = 8;
-	DEFAULT.outputFormat = FORMAT_HEX;
-	DEFAULT.typeStruct = nullptr;
+	TYPE* DEFAULT = new TYPE;
+	DEFAULT->name = "DEFAULT";
+	DEFAULT->size = 8;
+	DEFAULT->outputFormat = FORMAT_HEX;
+	DEFAULT->typeStruct = nullptr;
 	this->TYPES.push_back(DEFAULT);
 }
 
@@ -40,7 +40,7 @@ int session::addType(std::string typeName, int typeSize, int outputFormat)
 		if (typeSize <= 0) {
 			return TYPE_ERROR;
 		}
-		TYPE tmp = { typeName,typeSize, outputFormat , nullptr };
+		TYPE* tmp = new TYPE{ typeName, (unsigned int)typeSize, outputFormat, nullptr };
 		this->TYPES.push_back(tmp);
 		return TYPE_OK;
 	}
@@ -73,15 +73,13 @@ int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, s
 		}
 	}
 	else {
-		FUNCTION_DATA function = { funcAddr,NumOfArgs,&(this->TYPES.at(0)) /*default entry*/ };
+		FUNCTION_DATA function = { funcAddr,NumOfArgs,(this->TYPES.at(0)) /*default entry*/ };
 		this->FUNCTIONS_MAP.insert(std::make_pair(funcName, function));
 	}
 }
 
 int session::defineStruct(std::string structName, std::vector<std::string> fieldTypes) {
 	std::string fieldType;
-	STRUCTURE *tmpStruct = new STRUCTURE;
-	TYPE* tmpType;
 	bool found = false;
 	int size = 0;
 	if (structName.empty()) {
@@ -96,27 +94,32 @@ int session::defineStruct(std::string structName, std::vector<std::string> field
 		printf("[-] Struct can't be empty\n");
 		return TYPE_NAME_NOT_FOUND;
 	}
+	STRUCTURE *tmpStruct = new STRUCTURE;
+	tmpStruct->fields = new std::vector<TYPE*>;
+	TYPE* tmpType;
 	for (int i = 0; i < fieldTypes.size(); i++) {
 		found = false;
 		if (getTypeByName(fieldTypes.at(i)) != 0) {
 			found = true;
 			tmpType = (TYPE *)getTypeByName(fieldTypes.at(i));
-			tmpStruct->fields.push_back(*tmpType);
+			tmpStruct->fields->push_back(tmpType);
 			size += tmpType->size;
 		}
 		if (!found) {
 			printf("[-] Unknown type \"%s\"\n", fieldType.c_str());
 			return TYPE_NAME_NOT_FOUND;
-
+			delete tmpStruct->fields;
+			delete tmpStruct;
+			
 		}
 	}
 	
 
-	TYPE newStruct;
-	newStruct.name = structName;
-	newStruct.size = size;
-	newStruct.typeStruct = (void *)tmpStruct;
-	newStruct.outputFormat = FORMAT_HEX; // to do, parse input
+	TYPE *newStruct = new TYPE;
+	newStruct->name = structName;
+	newStruct->size = size;
+	newStruct->typeStruct = (void *)tmpStruct;
+	newStruct->outputFormat = FORMAT_HEX; // to do, parse input
 	this->TYPES.push_back(newStruct); // structure is considered as a type. As usual
 	return 0;
 }
@@ -247,17 +250,17 @@ void session::editVar(int field, std::string newVal, std::string varName)
 		uintptr_t basePointer = (uintptr_t)tmpVar->varAddr;
 		STRUCTURE *structData = (STRUCTURE *)tmpVar->type->typeStruct;
 		long long int offset = 0;
-		if (fieldNum > structData->fields.size() - 1) {
+		if (fieldNum > structData->fields->size() - 1) {
 			printf("[-] field number out of bounds\n");
 			return;
 		}
 		for (int i = 0; i < fieldNum; i++) {
-			offset += structData->fields.at(i).size;
+			offset += structData->fields->at(i)->size;
 		}
 		
 		//sum pointer and offset
 		basePointer += offset;
-		if (processData(newVal, structData->fields.at(fieldNum).size, (void *) basePointer) != PROCESSING_OK) {
+		if (processData(newVal, structData->fields->at(fieldNum)->size, (void *) basePointer) != PROCESSING_OK) {
 			printf("[-] Error occured while processing input\n");
 		}
 	}
@@ -288,7 +291,7 @@ void session::editFunc(int field, std::string newVal, std::string funcName) {
 }
 
 int session::createVariable(std::string type, std::string Name, std::vector<std::string> values) {
-	VARIABLE newVar;
+	
 	TYPE *tmpType = nullptr;
 	bool found = false;
 	int size = 0;
@@ -324,24 +327,25 @@ int session::createVariable(std::string type, std::string Name, std::vector<std:
 		printf("[-] Error during allocation\n");
 		return -1;
 	}
+	VARIABLE* newVar = new VARIABLE;
 	memset(varAddr, 0, modSize); // zero dat mem
 	if (tmpType->typeStruct != nullptr) {//check if struct
 		//call struct process
 		if (processStructData((STRUCTURE*)tmpType->typeStruct, varAddr,values) == PROCESSING_OK) {
-			newVar.name = Name;
-			newVar.size = size;
-			newVar.type = tmpType;
-			newVar.varAddr = varAddr;
+			newVar->name = Name;
+			newVar->size = size;
+			newVar->type = tmpType;
+			newVar->varAddr = varAddr;
 			this->VARIABLE_LIST.push_back(newVar);
 		}
 	}
 	else {
 		//call basic var process
 		if (processData(std::string((char *)data), size, varAddr) == PROCESSING_OK) {
-			newVar.name = Name;
-			newVar.size = size;
-			newVar.type = tmpType;
-			newVar.varAddr = varAddr;
+			newVar->name = Name;
+			newVar->size = size;
+			newVar->type = tmpType;
+			newVar->varAddr = varAddr;
 			this->VARIABLE_LIST.push_back(newVar);
 		}
 	}
@@ -358,14 +362,14 @@ int session::processStructData(STRUCTURE * structToFill, void* dstAddr, std::vec
 	}
 	void * structPointer;
 	structPointer = dstAddr;
-	for (int i = 0; i < structToFill->fields.size(); i++) {
+	for (int i = 0; i < structToFill->fields->size(); i++) {
 		if (i > valuesSize - 1) {
 			break; //less values than needed, but it's ok
 		}
-		if (processData(values.at(i), structToFill->fields.at(i).size, structPointer) != PROCESSING_OK) {
+		if (processData(values.at(i), structToFill->fields->at(i)->size, structPointer) != PROCESSING_OK) {
 			return PROCESSING_ERR;
 		}
-		structPointer = (void*)( (uintptr_t)(structPointer) +structToFill->fields.at(i).size); // might be broken, need to debug
+		structPointer = (void*)( (uintptr_t)(structPointer) +structToFill->fields->at(i)->size); // might be broken, need to debug
 	}
 	return PROCESSING_OK;
 }
@@ -446,11 +450,11 @@ int session::processData(std::string data, int size, void* dstAddr) {
 }
 
 int session::deleteVariable(std::string varName) {
-	VARIABLE varToDelete;
+	VARIABLE *varToDelete = NULL;
 	bool found = false;
 	int foundindex = 0;
 	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
-		if (this->VARIABLE_LIST.at(i).name.compare(varName) == 0) {
+		if (this->VARIABLE_LIST.at(i)->name.compare(varName) == 0) {
 			varToDelete = this->VARIABLE_LIST.at(i);
 			found = true;
 			foundindex = i;
@@ -460,8 +464,8 @@ int session::deleteVariable(std::string varName) {
 	if (!found) {
 		printf("[-] Variable with that name wasn't found\n");
 	}
+	free(varToDelete->varAddr);
 	this->VARIABLE_LIST.erase(this->VARIABLE_LIST.begin() + foundindex);
-	free(varToDelete.varAddr);
 	return 0;
 }
 
@@ -469,10 +473,10 @@ int session::deleteVariable(std::string varName) {
 void session::printVariables()
 {
 	printf("[*] Currently allocated variables\n");
-	VARIABLE curElement;
+	VARIABLE *curElement;
 	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
 		curElement = this->VARIABLE_LIST.at(i);
-		printf("[%d] %s %s\n", i, curElement.type->name.c_str(), curElement.name.c_str());
+		printf("[%d] %s %s\n", i, curElement->type->name.c_str(), curElement->name.c_str());
 	}
 }
 
@@ -497,10 +501,10 @@ void session::printVariableValue(std::string varName)
 		STRUCTURE *tmpStruct = (STRUCTURE *)curElement->type->typeStruct;
 		void * pointerAddr = curElement->varAddr;
 		printf("[+] %s\n", varName.c_str());
-		for (int i = 0; i < tmpStruct->fields.size(); i++) {
+		for (int i = 0; i < tmpStruct->fields->size(); i++) {
 			printf("[+][& 0x%p][%d] = ", pointerAddr,i);
-			printWithFormat(tmpStruct->fields.at(i).size, pointerAddr, tmpStruct->fields.at(i).outputFormat);
-			pointerAddr = (void*)(((uintptr_t)pointerAddr) + tmpStruct->fields.at(i).size); // no support for nested structs yet
+			printWithFormat(tmpStruct->fields->at(i)->size, pointerAddr, tmpStruct->fields->at(i)->outputFormat);
+			pointerAddr = (void*)(((uintptr_t)pointerAddr) + tmpStruct->fields->at(i)->size); // no support for nested structs yet
 		}
 	}
 	else {
@@ -544,8 +548,8 @@ void session::printTypeData(std::string typeName) {
 			printf("[+] Is structure\n");
 			printf("[*] Structure fields:\n");
 			STRUCTURE *tmpStruct = (STRUCTURE*)tmpType->typeStruct;
-			for (int j = 0; j < tmpStruct->fields.size(); j++) {
-				printf("[%d] %s\n", j, tmpStruct->fields.at(j).name.c_str());
+			for (int j = 0; j < tmpStruct->fields->size(); j++) {
+				printf("[%d] %s\n", j, tmpStruct->fields->at(j)->name.c_str());
 			}
 
 
@@ -595,7 +599,7 @@ void session::printLoadedLibs()
 
 void session::printTypes()
 {
-	TYPE curElement;
+	TYPE *curElement;
 	if (this->TYPES.size() == 0) {
 		printf("[-] No types were defined\n");
 		return;
@@ -603,7 +607,7 @@ void session::printTypes()
 
 	for (int i = 0; i < this->TYPES.size(); i++) {
 		curElement = this->TYPES.at(i);
-		printf("[*] %s %d\n", curElement.name.c_str(), curElement.size);
+		printf("[*] %s %d\n", curElement->name.c_str(), curElement->size);
 	}
 }
 
@@ -621,8 +625,8 @@ void session::printFuctions()
 
 uintptr_t session::getVarByName(std::string varName) {
 	for (int i = 0; i < this->VARIABLE_LIST.size(); i++) {
-		if (this->VARIABLE_LIST.at(i).name.compare(varName) == 0) {
-			return (uintptr_t)&this->VARIABLE_LIST.at(i);
+		if (this->VARIABLE_LIST.at(i)->name.compare(varName) == 0) {
+			return (uintptr_t)this->VARIABLE_LIST.at(i);
 		}
 	}
 	return 0;
@@ -631,8 +635,8 @@ uintptr_t session::getVarByName(std::string varName) {
 uintptr_t session::getTypeByName(std::string TypeName) {
 	
 	for (int i = 0; i < this->TYPES.size(); i++) {
-		if (this->TYPES.at(i).name.compare(TypeName) == 0) {
-			return (uintptr_t)&this->TYPES.at(i);
+		if (this->TYPES.at(i)->name.compare(TypeName) == 0) {
+			return (uintptr_t)this->TYPES.at(i);
 		}
 	}
 	return 0;

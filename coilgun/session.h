@@ -27,7 +27,7 @@ struct VARIABLE {
 };
 
 struct STRUCTURE {
-	std::vector<TYPE> fields;
+	std::vector<TYPE*> *fields;
 };
 
 struct FUNCTION_DATA {
@@ -91,8 +91,8 @@ public:
 	
 
 
-	std::vector<VARIABLE> VARIABLE_LIST;
-	std::vector<TYPE> TYPES; //typeName + typeSize
+	std::vector<VARIABLE *> VARIABLE_LIST;
+	std::vector<TYPE *> TYPES; //typeName + typeSize
 	std::map<std::string, HMODULE> LIBRARIES; //dllName + dllHandle
 	std::map<std::string, FUNCTION_DATA> FUNCTIONS_MAP; //funcName + funcAddr + arg count
 
