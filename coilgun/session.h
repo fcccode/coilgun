@@ -46,6 +46,8 @@ public:
 	~session();
 
 	uint8_t unxdigit(int c);
+
+	long long int read_n_le(uint8_t * src, int n);
 	
 	int addType(std::string typeName,int size, int outputFormat);
 	int addFunc(std::string dllName, std::string funcName, int NumOfArgs, std::string returnType);

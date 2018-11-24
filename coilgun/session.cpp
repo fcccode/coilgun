@@ -23,6 +23,8 @@ uint8_t session::unxdigit(int c) // thanks braindead
 	return (c | 32) + 10 - 'a';
 }
 
+
+
 int session::addType(std::string typeName, int typeSize, int outputFormat)
 {
 	bool found = false;
@@ -180,9 +182,6 @@ void session::editType(int field, std::string newVal, std::string typeName)
 		}
 		else if (newVal.compare("str") == 0) {
 			tmpType->outputFormat = FORMAT_STRING;
-		}
-		else if (newVal.compare("int") == 0) {
-			tmpType->outputFormat = FORMAT_INT;
 		}
 		break;
 	}
@@ -567,7 +566,7 @@ void session::printWithFormat(int size, void * varAddr, int OutputFormat) {
 	{
 	case FORMAT_HEX:
 		printf("0x");
-		for (signed int i = size-1; i >= 0; i--)
+		for (signed int i = size - 1; i >= 0; i--)
 		{
 			printf("%02x", (unsigned)((uint8_t*)varAddr)[i]);
 		}
@@ -576,13 +575,9 @@ void session::printWithFormat(int size, void * varAddr, int OutputFormat) {
 
 	case FORMAT_STRING:
 		//output string, needs additional checks to preserve instance from segfaults
-		printf("%s\n",  varAddr);
+		printf("%s\n", varAddr);
 		break;
 
-	case FORMAT_INT:
-		//output integer
-		printf("%d\n",  *((uintptr_t *)(varAddr)));
-		break;
 	}
 }
 void session::printLoadedLibs()

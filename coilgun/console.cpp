@@ -477,7 +477,10 @@ std::vector<std::string> console::delimitString(std::string stringToDelimit)
 			}
 		}
 	}
-	tokens.push_back(tmpStr);
+	if (!tmpStr.empty())
+	{
+		tokens.push_back(tmpStr);
+	}
 	if (!enquotedCorrectly) {
 		printf("[-] String is not enquoted properly\n");
 		return std::vector<std::string>();
