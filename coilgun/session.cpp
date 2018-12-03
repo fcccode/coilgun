@@ -142,9 +142,6 @@ int session::loadLibrary(std::string dllName) {
 	if (dllName.back() == '\\') {
 		return LIBRARY_NOT_FOUND;
 	}
-	if (LoadLibraryA(dllName.c_str()) == NULL) {
-		return LIBRARY_NOT_FOUND;
-	}
 	// if it was a path, let's truncate it
 	while (dllName.find('\\') != std::string::npos) {
 		dllName = dllName.substr(dllName.find('\\')+1);
