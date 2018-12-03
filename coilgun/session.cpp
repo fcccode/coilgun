@@ -701,9 +701,10 @@ void session::callWrapper(std::string funcName,std::vector<std::string> args)
 						found = true;
 						if (passByRef) {
 							parsedArgs.push_back(&(tmpVar->varAddr));
+							passByRef = false;
 						}
 						else {
-							parsedArgs.push_back(tmpVar->varAddr);
+							parsedArgs.push_back((tmpVar->varAddr));
 						}
 					}
 				}

@@ -10,11 +10,20 @@ asmCall PROC
 push rbp ; prologue
 mov rbp, rsp; prologue continues
 
-; preserve args
+; saving those args
 
-push r10;
-push r11; those will be restored at the end
-push r12;
+push RBX 
+push RDI
+push RSI
+push R12
+push R13
+push R14
+
+
+; alloc shadow space
+sub rsp, 32
+
+; copy regs
 mov r10, rcx; now r10 func pointer
 mov r11, rdx; r11 arg array
 mov r12, r8	; r12 argc
@@ -26,8 +35,7 @@ jbe lessOrEqualFour
 jmp moreThanFour
 
 noArgs LABEL NEAR
-call r10; 
-jmp restoreregs
+jmp makeCall
 
 lessOrEqualFour LABEL NEAR
 ; general registers should be preserved by the caller, so we dont need to restore them
@@ -51,44 +59,54 @@ mov rdx, [rdx]
 loadone LABEL NEAR
 mov rcx, [r11]
 mov rcx, [rcx]
-call r10;
-jmp restoreregs;
+jmp makeCall
 
 
 
 moreThanFour LABEL NEAR
-; load four regs
-mov rcx, [r11]
-mov rcx, [rcx]
+; load four first regs
+mov rcx, [r11] ; elem = arr[0]
+mov rcx, [rcx] ; *elem
 mov rdx, [r11+8]
 mov rdx, [rdx]
 mov r8,  [r11+16]
 mov r8, [r8]
 mov r9,  [r11+24]
 mov r9, [r9]
-mov rsi, 4
+mov rsi, r12
 
-continueloop LABEL NEAR
-cmp rsi,12 ; if counter == argc, then exit
+continueloop LABEL NEAR ; push in reverse order
+cmp rsi,4 ; if we went down to 4th arg, then exit
 je exitloop
-inc rsi ; increment counter
+dec rsi ; decrement counter
 mov rdi, [r11+rsi*8]
 push [rdi]
 jmp continueloop
 
 
 exitloop LABEL NEAR
+mov rsi, r12
 call r10
 sub rsi, 4 ; substract 4, because they were loaded in regs
 imul rsi, 8;
 sub rsp, rsi; clean stack
 jmp restoreregs
 
+makeCall LABEL NEAR
+call r10 ; will go down to restore regs
+
 
 restoreregs LABEL NEAR
-pop r12	;
-pop r11	;
-pop r10	;
+add rsp, 32 ; clear shadow space
+
+; restoring those regs
+pop R14
+pop R13
+pop R12
+pop RSI
+pop RDI
+pop RBX
+
 jmp finalize
 
 finalize LABEL NEAR
