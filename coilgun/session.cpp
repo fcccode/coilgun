@@ -69,7 +69,7 @@ int session::addFunc(std::string dllName, std::string funcName, int NumOfArgs, s
 	if (this->LIBRARIES.find(dllName) == this->LIBRARIES.end()) {
 		return LIBRARY_NOT_LOADED;
 	}
-	void* funcAddr = GetProcAddress(this->LIBRARIES.find(dllName)->second, &funcName[0]);
+	void* funcAddr = GetProcAddress(this->LIBRARIES.find(dllName)->second, funcName.c_str());
 	if (funcAddr == nullptr) {
 		return FUNCTION_NOT_FOUND;
 	}
@@ -138,7 +138,7 @@ int session::defineStruct(std::string structName, std::vector<std::string> field
 
 int session::loadLibrary(std::string dllName) {
 	HMODULE tmpHndl;
-	//sanity check
+	// ??
 	if (dllName.back() == '\\') {
 		return LIBRARY_NOT_FOUND;
 	}
@@ -146,7 +146,7 @@ int session::loadLibrary(std::string dllName) {
 	while (dllName.find('\\') != std::string::npos) {
 		dllName = dllName.substr(dllName.find('\\')+1);
 	}
-	tmpHndl = GetModuleHandleA(dllName.c_str());
+	tmpHndl = LoadLibraryA(dllName.c_str());
 	if (tmpHndl == nullptr){
 		return LIBRARY_NOT_FOUND;
 	}
