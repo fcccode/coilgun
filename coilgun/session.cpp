@@ -784,12 +784,7 @@ void session::execShellcode(void *shellCodeAddr, int size, bool noExec) {
 		return;
 	}
 	printf("[+] Executing shellcode\n");
-
-	std::thread shellcThr = std::thread(caller::shellcodeCall, (void*)locPointer);
 	
-	if (shellcThr.joinable()) {
-		shellcThr.detach(); //avoid exceptions
-	}
-
-	caller::shellcodeCall((void *)locPointer);
+	uintptr_t res = caller::shellcodeCall((void *)locPointer);
+	printf("[+] Output value %d\n", res);
 }
